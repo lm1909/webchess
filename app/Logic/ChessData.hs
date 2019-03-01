@@ -106,6 +106,16 @@ getSquare :: (Int, Int) -> ChessData -> Square
 getSquare c cd = (cd^.board) ! c
 
 
+getAllPositions :: ChessData -> Color -> [(Int, Int)]
+getAllPositions cd col = filter (\i -> corcol ((cd^.board) ! i)) [(x, y) | x <- [1..8], y <- [1..8]]
+    where corcol = \e -> case e of (Ent boardcol _) -> boardcol == col
+                                   _ -> False
+
+-- @TODO make nicer
+getKingPosition :: ChessData -> Color -> (Int, Int)
+getKingPosition cd col = (filter (\i -> corking ((cd^.board) ! i)) [(x, y) | x <- [1..8], y <- [1..8]]) !! 1
+    where corking = \e -> case e of (Ent col King) -> True
+                                    _ -> False
 
 setMove :: Move -> ChessData -> ChessData
 setMove mv cd = updateMove mv $ updateOffPieces mv $ updatePlayerOnTurn cd

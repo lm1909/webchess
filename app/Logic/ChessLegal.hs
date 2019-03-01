@@ -10,7 +10,7 @@ import Logic.ChessData
 
 
 data Legal x = Valid x | Invalid Reason deriving Show
-data Reason = Bounds | Player | NoPiece | TakeOwn | NoMove | QueenMove | KingMove | RookMove | BishopMove | PawnMove | KnightMove deriving Show
+data Reason = Bounds | Player | NoPiece | TakeOwn | NoMove | QueenMove | KingMove | RookMove | BishopMove | PawnMove | KnightMove | KingDanger deriving Show
 
 instance Functor Legal where
   fmap f (Valid cd)  = Valid $ f cd
@@ -23,8 +23,18 @@ instance Monad Legal where
   (>>=) (Valid x) f   = f x
   (>>=) (Invalid r) _ = Invalid r
 
-legal :: Move -> ChessData -> Legal ChessData
-legal mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoPiece mv) >>= (legalTakeOwn mv) >>= (legalMove mv)
+legal :: Move -> ChessData -> Legal ChessData -- @TODO add checkmate
+legal mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoPiece mv) >>= (legalTakeOwn mv) >>= (legalMove mv) >>= (legalKingDanger mv)
+
+-- this Ruleset without the check control is needed for the legalKingDanger Rule (otherwise a cycle would ensue)
+legalCheckmate :: Move -> ChessData -> Legal ChessData
+legalCheckmate mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoPiece mv) >>= (legalTakeOwn mv) >>= (legalMove mv)
+
+-- helper function, wraps legal to Bool
+legalWrapper :: (Move -> ChessData -> Legal ChessData) -> Move -> ChessData -> Bool
+legalWrapper lf mv cd = case (lf mv cd) of 
+                            Valid _ -> True
+                            Invalid _ -> False
 
 legalPlayer :: Move -> ChessData -> Legal ChessData
 legalPlayer (Move _ o _) cd = case ((cd^.board) ! o) of
@@ -58,7 +68,7 @@ legalMove mv@(Move _ o _) cd = case ((cd^.board) ! o) of
                                                      Knight -> legalKnightMove mv cd
 
 legalKingDanger :: Move -> ChessData -> Legal ChessData
-legalKingDanger = undefined -- @TODO King must not be in danger
+legalKingDanger mv cd = if check $ over (board) (updateMove mv) cd then Invalid KingDanger else return cd
 
 legalPawnMove :: Move -> ChessData -> Legal ChessData
 legalPawnMove (Move _ (ox, oy) d) cd
@@ -88,4 +98,13 @@ legalQueenMove mv cd = case (legalBishopMove mv cd)  of
                      Invalid _ -> case (legalRookMove mv cd) of 
                                     Valid _ -> return cd
                                     Invalid _ -> Invalid QueenMove
+
+-- determines if the player at turn is in check
+check :: ChessData -> Bool
+check cd = or $ fmap check_bool $ (fmap (\p -> Move 0 p king) (getAllPositions cd (switchColor $ cd^.playerOnTurn)))
+    where king = getKingPosition cd (cd^.playerOnTurn)
+          check_bool = \m -> legalWrapper legalCheckmate m cd
+
+
+
 

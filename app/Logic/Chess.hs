@@ -13,5 +13,4 @@ normalPawnMove = Move 1 (2, 2) (2, 3)
 makeMove :: Move -> ChessData -> Legal ChessData
 makeMove mv cd = setMove mv <$> (legal mv cd)
 
-testLogic :: [Legal ChessData]
 
