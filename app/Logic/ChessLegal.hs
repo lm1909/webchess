@@ -5,8 +5,8 @@ module Logic.ChessLegal where
 import           Control.Lens
 import           Control.Monad
 import           Data.Array
-import Logic.Util
-import Logic.ChessData
+import           Logic.Util
+import           Logic.ChessData
 
 
 data Legal x = Valid x | Invalid Reason deriving Show
@@ -26,7 +26,7 @@ instance Monad Legal where
 legal :: Move -> ChessData -> Legal ChessData -- @TODO add checkmate
 legal mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoPiece mv) >>= (legalTakeOwn mv) >>= (legalMove mv) >>= (legalKingDanger mv)
 
--- this Ruleset without the check control is needed for the legalKingDanger Rule (otherwise a cycle would ensue)
+-- this Rulesset without the check control is needed for the legalKingDanger Rule (otherwise a cycle would ensue)
 legalCheckmate :: Move -> ChessData -> Legal ChessData
 legalCheckmate mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoPiece mv) >>= (legalTakeOwn mv) >>= (legalMove mv)
 
@@ -68,7 +68,7 @@ legalMove mv@(Move _ o _) cd = case ((cd^.board) ! o) of
                                                      Knight -> legalKnightMove mv cd
 
 legalKingDanger :: Move -> ChessData -> Legal ChessData
-legalKingDanger mv cd = if check $ over (board) (updateMove mv) cd then Invalid KingDanger else return cd
+legalKingDanger mv cd = if check $ (updateMove mv) cd then Invalid KingDanger else return cd
 
 legalPawnMove :: Move -> ChessData -> Legal ChessData
 legalPawnMove (Move _ (ox, oy) d) cd
@@ -104,6 +104,16 @@ check :: ChessData -> Bool
 check cd = or $ fmap check_bool $ (fmap (\p -> Move 0 p king) (getAllPositions cd (switchColor $ cd^.playerOnTurn)))
     where king = getKingPosition cd (cd^.playerOnTurn)
           check_bool = \m -> legalWrapper legalCheckmate m cd
+
+
+allMovesFromPos :: (Int, Int) -> ChessData -> [Move]
+allMovesFromPos o cd = filter (\m -> legalWrapper legalCheckmate m cd) $ [Move 0 o (dx, dy) | dx <- [1..8], dy <- [1..8]]
+
+allMovesForPlayer :: Color -> ChessData -> [Move]
+allMovesForPlayer col cd = concat $ [allMovesFromPos p cd | p <- getAllPositions cd col]
+
+checkMate :: Color -> ChessData -> Bool
+checkMate col cd = check cd && ((length $ allMovesForPlayer col cd) == 0)
 
 
 
