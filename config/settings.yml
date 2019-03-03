@@ -33,5 +33,5 @@ database:
   database: "_env:YESOD_SQLITE_DATABASE:webchess.sqlite3"
   poolsize: "_env:YESOD_SQLITE_POOLSIZE:10"
 
-copyright: Insert copyright statement here
+copyright: Copyright for all icons by Yuri Mazursky. All Icons are under a Creative Commons Attribution 2.5 Generic (CC BY 2.5) license (https://creativecommons.org/licenses/by/2.5/). All icons can be found at https://www.iconfinder.com/iconsets/chess-7. No changes were made.
 #analytics: UA-YOURCODE
