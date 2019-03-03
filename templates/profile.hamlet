@@ -8,3 +8,5 @@
 
     <p>
       Your data is protected with us <strong><span class="username">#{userIdent user}</span></strong>!
+
+    <p> Complete entry #{show person} with id #{show id} and user #{show user}

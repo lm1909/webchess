@@ -10,3 +10,4 @@
 / HomeR GET
 
 /profile ProfileR GET
+/user/#UserId UserR GET
