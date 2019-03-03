@@ -1,0 +1,8 @@
+<div .container>
+    <div .row>
+        <div .col-md-9>
+            <h3> Sorry
+            <p .lead> Error 404 - we couldn't find what you're looking for
+        <div .col>
+            <img src=@{StaticR svg_blackking_svg} .img-fluid>
+
