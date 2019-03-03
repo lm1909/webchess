@@ -4,6 +4,7 @@
 User
     ident Text
     password Text Maybe
+    nick Text Maybe
     UniqueUser ident
     deriving Typeable Show
 Email
