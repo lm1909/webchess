@@ -7,8 +7,16 @@ User
     nick Text Maybe
     UniqueUser ident
     deriving Typeable Show
+
 Email
     email Text
     userId UserId Maybe
     verkey Text Maybe
     UniqueEmail email
+
+Game
+    gameid Int
+    player UserId
+    opponent UserId
+    UniqueGame gameid
+    deriving Show
