@@ -176,6 +176,11 @@ instance Yesod App where
     -- the profile route requires that the user is authenticated, so we
     -- delegate to that function
     isAuthorized ProfileR _ = isAuthenticated
+    -- @TODO ultimate destination here?
+    isAuthorized NewR _ = do auth <- maybeAuthId
+                             return $ case auth of
+                                 Nothing -> AuthenticationRequired
+                                 Just _ -> Authorized
 
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows

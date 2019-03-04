@@ -1,0 +1,3 @@
+<form method=post action=@{NewR} enctype=#{enctype}>
+    ^{widget}
+    <button .button class="btn btn-primary btn-lg btn-block">Start Game
