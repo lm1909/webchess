@@ -5,20 +5,20 @@
                 My Profile
 
 <div .container>
-        <div .row>
-            <h3> Information
-            <p>Your data is protected with us <strong><span class="username">#{userIdent user}</span></strong>!
+    <div .row>
+        <h3> Information
+        <p>Your data is protected with us <strong><span class="username">#{userIdent user}</span></strong>!
 
-        <div .row>
-            <h3> Modify account information
-            <form method=post action=@{ProfileR} enctype=#{enctype}>
-                ^{widget}
-                <button .button class="btn btn-primary btn-lg btn-block">Update account information
+    <div .row>
+        <h3> Modify account information
+        <form method=post action=@{ProfileR} enctype=#{enctype}>
+            ^{widget}
+            <button .button class="btn btn-primary btn-lg btn-block">Update account information
 
-        <div .row>
-            <h3> Advanced debug information
-            <pre>
-                <code>
-                     Complete entry #{show person}
-                     Id #{show id}
-                     User #{show user} 
+    <div .row>
+        <h3> Advanced debug information
+        <pre>
+            <code>
+                 Complete entry #{show person}
+                 Id #{show id}
+                 User #{show user} 
