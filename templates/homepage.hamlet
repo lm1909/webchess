@@ -4,6 +4,12 @@
             <h1 .header>
                 webchess
                 <h2> generic Haskell web-app chess platform implementation
-                <a href="http://www.yesodweb.com/book/" .btn.btn-info.btn-lg> New Game
-            
 
+<div .container>
+    <div .card-deck>
+        <div .card  .stretched-link style="width: 16rem;">
+          <img .card-img-top src=@{StaticR svg_whiteknight_svg} alt="" id="cardimg">
+          <div .card-body>
+            <h4 .card-title>New
+            <p .card-text>Start a new game of classic chess with any user on webchess.
+            <a href=@{NewR} .btn .btn-primary>Create Game
