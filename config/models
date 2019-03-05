@@ -16,8 +16,6 @@ Email
     UniqueEmail email
 
 Game
-    gameid Int
     player UserId
     opponent UserId
-    UniqueGame gameid
     deriving Show
