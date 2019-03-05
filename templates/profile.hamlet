@@ -7,7 +7,7 @@
 <div .container>
     <div .row>
         <h3> Information
-        <p>Your data is protected with us <strong><span class="username">#{userIdent user}</span></strong>!
+        <p>Your data is protected with us <strong><span class="username">#{userNick user}</span></strong>!
 
     <div .row>
         <h3> Modify account information
