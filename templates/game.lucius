@@ -1,0 +1,18 @@
+#chesstable {
+
+    margin: auto;
+
+}
+
+#chesscontainer {
+
+    margin: auto;
+    padding: 2% 2% 2% 2%;
+
+}
+
+.masthead {
+
+    max-height: 120px; 
+
+}

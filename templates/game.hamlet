@@ -4,4 +4,17 @@
             <h1 .header>
                 Game
 
-#{show game}
+<div .container>
+    <div .row>
+        <div .container id="chesscontainer">
+            ^{renderBoard initBoard}
+
+    <div .row>
+        <form method=post action="#" enctype=#{enctype}>
+            ^{movewidget}
+
+    <div .row>
+        <h3> Advanced debug information
+        <pre>
+            <code>
+                #{show game}
