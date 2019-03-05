@@ -1,0 +1,17 @@
+li {
+    line-height: 2em;
+    font-size: 16px
+}
+
+.masthead {
+
+   max-height: 120; 
+    
+}
+
+.code {
+    
+    margin-top: 25px;
+
+}
+

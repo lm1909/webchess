@@ -9,7 +9,7 @@
 
 / HomeR GET
 
-/profile ProfileR GET
+/profile ProfileR GET POST
 /user/#UserId UserR GET
 /game/#GameId GameR GET POST
 /new NewR GET POST

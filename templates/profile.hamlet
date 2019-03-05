@@ -1,12 +1,24 @@
-<div .ui.container>
+<div .masthead>
+    <div .container>
+        <div .row>
+            <h1 .header>
+                My Profile
 
-    <h1>
-      Access granted!
+<div .container>
+        <div .row>
+            <h3> Information
+            <p>Your data is protected with us <strong><span class="username">#{userIdent user}</span></strong>!
 
-    <p>
-      This page is protected and access is allowed only for authenticated users.
+        <div .row>
+            <h3> Modify account information
+            <form method=post action=@{ProfileR} enctype=#{enctype}>
+                ^{widget}
+                <button .button class="btn btn-primary btn-lg btn-block">Update account information
 
-    <p>
-      Your data is protected with us <strong><span class="username">#{userIdent user}</span></strong>!
-
-    <p> Complete entry #{show person} with id #{show id} and user #{show user}
+        <div .row>
+            <h3> Advanced debug information
+            <pre>
+                <code>
+                     Complete entry #{show person}
+                     Id #{show id}
+                     User #{show user} 
