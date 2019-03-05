@@ -1,10 +1,6 @@
 <div .masthead>
     <div .container>
         <div .row>
-                $maybe (nick) <- userNick person
-                    <h1 .header> #{show nick}
-                $nothing 
-                    <h1 .header> Anonymous user
         <div .row>
                     User #{show person}
 

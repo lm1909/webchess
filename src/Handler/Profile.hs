@@ -18,7 +18,7 @@ getProfileR :: Handler Html
 getProfileR = do
     (id, user) <- requireAuthPair
     person <- runDB $ get404 id
-    (widget, enctype) <- generateFormPost (accountForm (userNick person))
+    (widget, enctype) <- generateFormPost (accountForm (Just $ userNick person))
     defaultLayout $ do
         setTitle "User page"
         $(widgetFile "profile")
@@ -30,7 +30,7 @@ postProfileR = do ((result, widget), enctype) <- runFormPost (accountForm Nothin
                   (person) <- runDB $ get id
 
                   case result of
-                    FormSuccess account -> do runDB $ update id [UserNick =. (Just $ nick account)]
+                    FormSuccess account -> do runDB $ update id [UserNick =. (nick account)]
                                               setMessage $ toHtml ("Updated User nickname" :: Text)
                                               defaultLayout $ $(widgetFile "profile")
                     _ -> defaultLayout $ $(widgetFile "profile")

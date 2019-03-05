@@ -25,6 +25,7 @@ import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Text.Encoding as TE
+import Data.Text as DT (pack, unpack)
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -262,11 +263,10 @@ instance YesodAuth App where
         x <- getBy $ UniqueUser $ credsIdent creds
         case x of
             Just (Entity uid _) -> return $ Authenticated uid
-            Nothing -> Authenticated <$> insert User
-                { userIdent = credsIdent creds
-                , userPassword = Nothing
-                , userNick = Nothing
-                }
+            Nothing -> do key <- insert User { userIdent = credsIdent creds
+                                                        , userPassword = Nothing
+                                                        , userNick = (credsIdent creds) } -- @TODO this causes the terrible default name when using Yahoo
+                          Authenticated <$> (return key)
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
@@ -289,7 +289,6 @@ instance YesodAuthPersist App
 instance RenderMessage App FormMessage where
     renderMessage :: App -> [Lang] -> FormMessage -> Text
     renderMessage _ _ = defaultFormMessage
-
 -- Useful when writing code that is re-usable outside of the Handler context.
 -- An example is background jobs that send email.
 -- This can also be useful for writing code that works across multiple Yesod applications.
