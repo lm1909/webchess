@@ -7,11 +7,11 @@ module Handler.New where
 
 import Import
 
-data GameMeta = GameMeta {opponent :: Int} deriving Show
+data GameMeta = GameMeta {opponent :: Text} deriving Show
 
 gameForm :: Form GameMeta
 gameForm = renderBootstrap $ GameMeta 
-                <$> areq intField "Opponent UserId" Nothing
+                <$> areq textField "Opponent Nickname" Nothing
 
 getNewR :: Handler Html
 getNewR = do (widget, enctype) <- generateFormPost gameForm
@@ -21,6 +21,12 @@ getNewR = do (widget, enctype) <- generateFormPost gameForm
 postNewR :: Handler Html
 postNewR = do ((result, widget), enctype) <- runFormPost gameForm
               case result of
-                FormSuccess game -> redirect (HomeR) -- @TODO real game id
+                FormSuccess game -> do (id, user) <- requireAuthPair
+                                       opponent <- runDB $ getBy $ UniqueNick (opponent game)
+                                       case opponent of 
+                                            Nothing -> do setMessage $ toHtml ("Game creation failed: No such user exists" :: Text)
+                                                          defaultLayout $ $(widgetFile "new")
+                                            (Just (Entity key val)) -> do gameid <- runDB $ insert Game {gamePlayer = id, gameOpponent = key}
+                                                                          redirect (GameR gameid) 
                 _ -> defaultLayout $ $(widgetFile "new")
 
