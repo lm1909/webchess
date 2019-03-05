@@ -31,4 +31,3 @@ instance Show ChessData where
 showBoard :: Board -> String
 showBoard arr = unlines [ concat [show (arr ! (x, y)) | x <- [1..8]] | y <- [1..8]]
 
-

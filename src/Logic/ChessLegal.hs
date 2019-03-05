@@ -72,7 +72,8 @@ legalKingDanger mv cd = if check $ (updateMove mv) cd then Invalid KingDanger el
 
 legalPawnMove :: Move -> ChessData -> Legal ChessData
 legalPawnMove (Move _ (ox, oy) d) cd
-    | (d == (ox, oy+1)) && ((cd^.board) ! d == None) = return cd -- no capturing
+    | (d == (ox, oy+1)) && ((cd^.board) ! d == None) && (cd^.playerOnTurn == White)  = return cd -- no capturing
+    | (d == (ox, oy-1)) && ((cd^.board) ! d == None) && (cd^.playerOnTurn == Black)  = return cd -- no capturing
     | ((cd^.board) ! d /= None) && (d `elem` [(ox+1, oy+1), (ox-1, oy+1)]) = return cd -- capturing
     | otherwise = Invalid PawnMove
 -- @TODO: Pawn promotion, en passant capturing
@@ -87,7 +88,7 @@ legalBishopMove :: Move -> ChessData -> Legal ChessData
 legalBishopMove (Move _ (ox, oy) d@(dx, dy)) cd = if (d `elem` [(ox+n, oy+n) | n <- [-8..8]] ++ [(ox+n, oy-n) | n <- [-8..8]]) && (and $ fmap ((==) None) $ fmap ((!) (cd^.board)) inter) then return cd else Invalid BishopMove
     where inter = ([(ox+x*n, oy+y*n) | n <- [1..(abs dx-ox)]]) where x = sign dx-ox
                                                                      y = sign dy-oy
-
+-- assumes that origin of Move is rook
 legalRookMove :: Move -> ChessData -> Legal ChessData
 legalRookMove (Move _ (ox, oy) (dx, dy)) cd = if (ox == dx || oy == dy) && (and $ fmap ((==) None) $ fmap ((!) (cd^.board)) inter) then return cd else Invalid RookMove
     where inter = (\xs -> take (length xs -1) xs) $ drop 1 ([(ox+x, oy+y) | x <- [dx-ox..0], y <- [dy-dx..0]] ++ [(ox+x, oy+y) | x <- [0..dx-ox], y <- [0..dy-dx]])
@@ -98,6 +99,9 @@ legalQueenMove mv cd = case (legalBishopMove mv cd)  of
                      Invalid _ -> case (legalRookMove mv cd) of 
                                     Valid _ -> return cd
                                     Invalid _ -> Invalid QueenMove
+
+explore :: (Int, Int) -> ((Int, Int) -> [(Int, Int)]) -> ChessData
+explore = undefined
 
 -- determines if the player at turn is in check
 check :: ChessData -> Bool
@@ -114,7 +118,5 @@ allMovesForPlayer col cd = concat $ [allMovesFromPos p cd | p <- getAllPositions
 
 checkMate :: Color -> ChessData -> Bool
 checkMate col cd = check cd && ((length $ allMovesForPlayer col cd) == 0)
-
-
 
 

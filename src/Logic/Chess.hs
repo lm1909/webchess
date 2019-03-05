@@ -14,3 +14,5 @@ makeMove :: Move -> ChessData -> Legal ChessData
 makeMove mv cd = setMove mv <$> (legal mv cd)
 
 
+
+
