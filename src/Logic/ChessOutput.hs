@@ -26,7 +26,7 @@ instance Show Move where
 
 instance Show ChessData where
     show cd = "Game " ++ (show $ cd^.status) ++ ", on turn: " ++ (show $ cd^.playerOnTurn)
-              ++ "\n" ++ (showBoard $ cd^.board) ++ (concat $ fmap (\m -> (show m) ++ "\n") $ cd^.history)
+              ++ "\n" ++ (showBoard $ cd^.board) ++ (concat $ fmap (\m -> (show m) ++ "\n") $ cd^.history) ++ (concat $ fmap (\(pc, col) -> (show col) ++ ": " ++ (show pc) ++ "\n") $ cd^.offPieces)
 
 showBoard :: Board -> String
 showBoard arr = unlines [ concat [show (arr ! (x, y)) | x <- [1..8]] | y <- [1..8]]
