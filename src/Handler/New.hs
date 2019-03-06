@@ -6,6 +6,8 @@
 module Handler.New where
 
 import Import
+import Logic.ChessDBConnector
+import Logic.ChessData
 
 data GameMeta = GameMeta {opponent :: Text} deriving Show
 
@@ -26,7 +28,11 @@ postNewR = do ((result, widget), enctype) <- runFormPost gameForm
                                        case opponent of 
                                             Nothing -> do setMessage $ toHtml ("Game creation failed: No such user exists" :: Text)
                                                           defaultLayout $ $(widgetFile "new")
-                                            (Just (Entity key val)) -> do gameid <- runDB $ insert Game {gamePlayer = id, gameOpponent = key}
+                                            (Just (Entity key val)) -> do gameid <- runDB $ insert Game {gamePlayer = id,
+                                                                                                         gameOpponent = key,
+                                                                                                         gamePlayerOnTurn = White,
+                                                                                                         gameGameStatus = Running,
+                                                                                                         gameHistory = historyToText [] }
                                                                           redirect (GameR gameid) 
                 _ -> defaultLayout $ $(widgetFile "new")
 

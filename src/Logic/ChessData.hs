@@ -1,21 +1,24 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Logic.ChessData where
 
 import           Control.Lens
 import           Control.Monad
 import           Data.Array
-import           Prelude
+import Database.Persist.TH
 
 
-data GameStatus = Running | Finished deriving (Show, Eq)
-data Color = Black | White deriving (Eq, Show)
+data GameStatus = Running | Finished deriving (Show, Read, Eq)
+
+data Result = Draw | Winner Color deriving (Show, Read, Eq)
+data Color = Black | White deriving (Eq, Read, Show)
 
 switchColor :: Color -> Color
 switchColor White = Black
 switchColor Black = White
 
-data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving Eq
+data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving Eq 
 
 data Square = None | Ent Color Piece deriving Eq
 
