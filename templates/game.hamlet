@@ -26,7 +26,7 @@
                 <h2> All moves in the game:
                 <ul .list-group>
                     $forall m <- _history cd
-                        <li>#{show m}  
+                        <li .list-group-item>#{show m}  
 
     <div .row>
         <h3> Advanced debug information
