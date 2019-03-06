@@ -46,6 +46,7 @@ getGameR gameId = do game <- runDB $ get404 gameId
                      ((res, movewidget), enctype) <- runFormGet moveForm
                      let cd = gameToChessData game
                      defaultLayout $ do setTitle "Game"
+                                        addScriptRemote "http://code.jquery.com/jquery-latest.js"
                                         $(widgetFile "game")
 
 
@@ -58,7 +59,7 @@ postGameR gameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm
                                                                  case legal move cd of 
                                                                     Valid _ -> do runDB $ update gameId [GameHistory =. (historyToText $ (move:(_history cd)))]
                                                                                   setMessage $ toHtml ("Move sent" :: Text)
-                                                                                  redirect (GameR gameId) -- @TODO update game state
+                                                                                  redirect (GameR gameId)
                                                                     Invalid r -> do setMessage $ toHtml ("Move invalid: " Prelude.++ show r)
                                                                                     redirect (GameR gameId)
                         FormFailure f -> do setMessage $ toHtml ("Failure " Prelude.++ show f)
