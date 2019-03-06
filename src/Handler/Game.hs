@@ -10,6 +10,9 @@ import           Control.Applicative
 import Import
 import Logic.ChessData
 import Data.Array
+import Logic.ChessDBConnector
+import Logic.ChessLegal
+import Data.Text as DT
 
 data MoveForm = MoveForm {ox :: Int, oy :: Int, dx :: Int, dy :: Int}
 
@@ -35,18 +38,29 @@ moveForm extra = do
                              |]
     return (moveRes, widget)
 
+gameToChessData :: Game -> ChessData
+gameToChessData game = gameFromMoves (textToHistory $ gameHistory game)
+
 getGameR :: GameId -> Handler Html
 getGameR gameId = do game <- runDB $ get404 gameId
                      ((res, movewidget), enctype) <- runFormGet moveForm
+                     let cd = gameToChessData game
                      defaultLayout $ do setTitle "Game"
                                         $(widgetFile "game")
 
 
 postGameR :: GameId -> Handler Html
 postGameR gameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm -- @TODO enable cross site request forgery protection
+                      game <- runDB $ get404 gameId
+                      let cd = gameToChessData game
                       case result of
-                        FormSuccess move -> do setMessage $ toHtml ("Move sent" :: Text)
-                                               redirect (GameR gameId) -- @TODO update game state
+                        FormSuccess (MoveForm ox oy dx dy) -> do let move = Move (1 + (Prelude.length $ _history $ cd)) (ox,oy) (dx,dy) 
+                                                                 case legal move cd of 
+                                                                    Valid _ -> do runDB $ update gameId [GameHistory =. (historyToText $ (move:(_history cd)))]
+                                                                                  setMessage $ toHtml ("Move sent" :: Text)
+                                                                                  redirect (GameR gameId) -- @TODO update game state
+                                                                    Invalid r -> do setMessage $ toHtml ("Move invalid: " Prelude.++ show r)
+                                                                                    redirect (GameR gameId)
                         FormFailure f -> do setMessage $ toHtml ("Failure " Prelude.++ show f)
                                             redirect (GameR gameId)
                         FormMissing -> do setMessage $ toHtml ("Form Missing" :: Text)
@@ -93,15 +107,6 @@ renderBoard arr = do toWidget [whamlet| <table id="chesstable">
                                                         <td> ^{renderSquare (x, y) (arr ! (x, y))}                
                                 |]
                     where xs = [1..8]
-                          ys = [1..8]
-
-
-
-
-
-
-
-
-
+                          ys = [8, 7..1]
 
 

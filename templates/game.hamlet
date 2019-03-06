@@ -5,16 +5,34 @@
                 Game
 
 <div .container>
-    <div .row>
-        <div .container id="chesscontainer">
-            ^{renderBoard initBoard}
+    <div .container id="exTab">
+        <ul .nav .nav-tabs>
+            <li .active>
+                <a href="#game" data-toggle="tab"> Game
+            <li>
+                <a href="#history" data-toggle="tab"> History
+            
+        <div .tab-content>
+            <div .tab-pane .active id="game">
+                <div .row>
+                    <div .container id="chesscontainer">
+                        ^{renderBoard $ _board cd}
 
-    <div .row>
-        <form method=post action="#" enctype=#{enctype}>
-            ^{movewidget}
+                <div .row>
+                    <form method=post action="#" enctype=#{enctype}>
+                        ^{movewidget}
+
+            <div .tab-pane id="history">
+                <h2> All moves in the game:
+                <ul .list-group>
+                    $forall m <- _history cd
+                        <li>#{show m}  
 
     <div .row>
         <h3> Advanced debug information
         <pre>
             <code>
                 #{show game}
+        <pre>
+            <code>
+                #{show cd}

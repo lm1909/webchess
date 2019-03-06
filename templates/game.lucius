@@ -16,3 +16,10 @@
     max-height: 120px; 
 
 }
+
+#exTab {
+
+    color: whiteM
+    padding: 2% 0px 2% 0px;
+
+}

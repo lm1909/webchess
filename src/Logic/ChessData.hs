@@ -120,8 +120,9 @@ getKingPosition cd col = (filter (\i -> corking ((cd^.board) ! i)) [(x, y) | x <
     where corking = \e -> case e of (Ent col King) -> True
                                     _ -> False
 
+-- @TODO update game status
 setMove :: Move -> ChessData -> ChessData
-setMove mv cd = updateMove mv $ updateOffPieces mv $ updatePlayerOnTurn cd
+setMove mv cd = addMoveToHistory mv $ updateMove mv $ updateOffPieces mv $ updatePlayerOnTurn cd
 
 -- Warning: does not check if moves are legal
 gameFromMoves :: [Move] -> ChessData
