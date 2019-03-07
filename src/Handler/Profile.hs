@@ -30,7 +30,7 @@ postProfileR = do ((result, widget), enctype) <- runFormPost (accountForm Nothin
                   (person) <- runDB $ get id
 
                   case result of
-                    FormSuccess account -> do runDB $ update id [UserNick =. (nick account)]
+                    FormSuccess account -> do runDB $ update id [UserNick =. (nick account)] -- @TODO need to check here that username is unique
                                               setMessage $ toHtml ("Updated User nickname" :: Text)
                                               defaultLayout $ $(widgetFile "profile")
                     _ -> defaultLayout $ $(widgetFile "profile")
