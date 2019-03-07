@@ -70,7 +70,7 @@ legalMove mv@(Move _ o _) cd = case ((cd^.board) ! o) of
                                                      Knight -> legalKnightMove mv cd
 
 legalKingDanger :: Move -> ChessData -> Legal ChessData
-legalKingDanger mv cd = if check $ (updateMove mv) cd then Invalid KingDanger else return cd
+legalKingDanger mv cd = if check ((updateMove mv) cd) (cd^.playerOnTurn) then Invalid KingDanger else return cd
 
 -- @TODO: Pawn promotion, en passant capturing
 legalPawnMove :: Move -> ChessData -> Legal ChessData
@@ -119,20 +119,21 @@ oneWayExplore o f cd
     | (primitiveInBounds (f o) cd) && not ((cd^.board) ! (f o) == None) = [f o]
     | otherwise = (f o):(oneWayExplore (f o) f cd)
 
--- determines if the player at turn is in check
-check :: ChessData -> Bool
-check cd = or $ fmap check_bool $ (fmap (\p -> Move 0 p king) (getAllPositions cd (switchColor $ cd^.playerOnTurn)))
-    where king = getKingPosition cd (cd^.playerOnTurn)
-          check_bool = \m -> legalWrapper legalCheckmate m cd
-
+-- determines if the player with speciefied color is in check
+check :: ChessData -> Color -> Bool
+check cd col = or $ fmap check_bool $ (fmap (\p -> Move 0 p king) (getAllPositions cd' (switchColor col)))
+    where king = getKingPosition cd col
+          check_bool = \m -> legalWrapper legalCheckmate m cd'
+          cd' = set playerOnTurn (switchColor col) cd
 
 allMovesFromPos :: (Int, Int) -> ChessData -> [Move]
-allMovesFromPos o cd = filter (\m -> legalWrapper legalCheckmate m cd) $ [Move 0 o (dx, dy) | dx <- [1..8], dy <- [1..8]]
+allMovesFromPos o cd = filter (\m -> legalWrapper legalCheckmate m cd) $ [Move (-1) o (dx, dy) | dx <- [1..8], dy <- [1..8]]
 
 allMovesForPlayer :: Color -> ChessData -> [Move]
-allMovesForPlayer col cd = concat $ [allMovesFromPos p cd | p <- getAllPositions cd col]
+allMovesForPlayer col cd = concat $ [allMovesFromPos p cd' | p <- getAllPositions cd' col]
+    where cd' = set playerOnTurn (col) cd
 
 checkMate :: Color -> ChessData -> Bool
-checkMate col cd = check cd && ((length $ allMovesForPlayer col cd) == 0)
+checkMate col cd = check cd col && ((length $ allMovesForPlayer col cd) == 0)
 
 

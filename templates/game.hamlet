@@ -32,6 +32,17 @@
 
     <div .row>
         <h3> Advanced debug information
+        In CHECK: #{show $ Logic.ChessLegal.check cd (_playerOnTurn cd)}
+        <code> King Position: White #{show $ getKingPosition cd White} Black #{show $ getKingPosition cd Black}
+        <pre>
+            <code>
+                #{show $ allMovesForPlayer White cd}
+            <code>
+                #{show $ allMovesForPlayer Black cd}
+        <pre>
+            <code>
+                White #{show $ getAllPositions cd White}
+                Black #{show $ getAllPositions cd Black}
         <pre>
             <code>
                 #{show game}

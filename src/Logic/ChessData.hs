@@ -116,8 +116,8 @@ getAllPositions cd col = filter (\i -> corcol ((cd^.board) ! i)) [(x, y) | x <- 
 
 -- @TODO make nicer
 getKingPosition :: ChessData -> Color -> (Int, Int)
-getKingPosition cd col = (filter (\i -> corking ((cd^.board) ! i)) [(x, y) | x <- [1..8], y <- [1..8]]) !! 1
-    where corking = \e -> case e of (Ent col King) -> True
+getKingPosition cd col = (filter (\i -> corking ((cd^.board) ! i)) [(x, y) | x <- [1..8], y <- [1..8]]) !! 0
+    where corking = \e -> case e of (Ent c King) -> c == col
                                     _ -> False
 
 -- @TODO update game status
