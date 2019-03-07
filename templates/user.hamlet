@@ -1,6 +1,22 @@
 <div .masthead>
     <div .container>
         <div .row>
-        <div .row>
-                    User #{show person}
+            <h1 .header>
+                #{userNick person}
 
+<div .container>
+    <div .row>
+        <h3> User Information
+        <table .table>
+            <tr>
+                <th> Nickname
+                <th> #{userNick person}
+            <tr>
+                <th> Elo
+                <th> #{userElo person}
+
+    <div .row>
+        <h3> Advanced debug information
+        <pre>
+            <code>
+                 Complete entry #{show person}
