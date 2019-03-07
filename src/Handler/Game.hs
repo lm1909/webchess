@@ -45,8 +45,11 @@ getGameR :: GameId -> Handler Html
 getGameR gameId = do game <- runDB $ get404 gameId
                      ((res, movewidget), enctype) <- runFormGet moveForm
                      let cd = gameToChessData game
+                     (player, opponent) <- runDB $ do player <- get404 (gamePlayer game) -- @TODO is a 404 really optimal here?
+                                                      opponent <- get404 (gameOpponent game)
+                                                      return (player, opponent)
                      defaultLayout $ do setTitle "Game"
-                                        addScriptRemote "http://code.jquery.com/jquery-latest.js"
+                                        addScriptRemote "http://code.jquery.com/jquery-latest.js" -- this is necessary for the live update view js
                                         $(widgetFile "game")
 
 
@@ -101,13 +104,43 @@ iconAccessor White Rook = StaticR svg_whiterook_svg
 iconAccessor White Knight = StaticR svg_whiteknight_svg
 
 renderBoard :: Board -> Widget
-renderBoard arr = do toWidget [whamlet| <table id="chesstable">
-                                            $forall y <- ys
-                                                <tr>
-                                                    $forall x <- xs
-                                                        <td> ^{renderSquare (x, y) (arr ! (x, y))}                
+renderBoard arr = do toWidget [whamlet| <div id="chessboard">
+                                            <table id="chesstable">
+                                                $forall y <- ys
+                                                    <tr>
+                                                        $forall x <- xs
+                                                            <td> ^{renderSquare (x, y) (arr ! (x, y))}                
                                 |]
                     where xs = [1..8]
                           ys = [8, 7..1]
+
+renderOffPieces :: [(Piece, Color)] -> Widget
+renderOffPieces opcs = do toWidget [whamlet| <div id="offpieces">
+                                                 <table>
+                                                    <tr> 
+                                                        <td><b>White</b>
+                                                        $forall (wp, wc) <- whites
+                                                            <td>
+                                                                <div id="piececontainer">
+                                                                    <img src=@{iconAccessor wc wp} id="icon" style="margin: auto">
+                                                    <tr>
+                                                        <td><b>Black</b>
+                                                        $forall (bp, bc) <- blacks
+                                                            <td>
+                                                                <div id="piececontainer">
+                                                                    <img src=@{iconAccessor bc bp} id="icon" style="margin: auto">     |] 
+                          toWidget [lucius| #piececontainer {
+                                                 width: 100px;
+                                                 height: 100px;
+                                                 min-height: 100px;
+                                            }
+                                   |] -- @TODO dont hardcode the pixel size
+                         where whites = (Prelude.filter (\(_, c) -> (c == White)) opcs)
+                               blacks = (Prelude.filter (\(_, c) -> (c == Black)) opcs)
+
+
+
+
+
 
 

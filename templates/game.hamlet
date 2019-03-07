@@ -2,7 +2,8 @@
     <div .container>
         <div .row>
             <h1 .header>
-                Game
+                Classic chess
+            <h2> #{userNick player} vs #{userNick opponent}
 
 <div .container>
     <div .container id="exTab">
@@ -17,6 +18,7 @@
                 <div .row>
                     <div .container id="chesscontainer">
                         ^{renderBoard $ _board cd}
+                        ^{renderOffPieces $ _offPieces cd}
 
                 <div .row>
                     <form method=post action="#" enctype=#{enctype}>
