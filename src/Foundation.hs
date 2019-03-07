@@ -266,6 +266,7 @@ instance YesodAuth App where
             Just (Entity uid _) -> return $ Authenticated uid
             Nothing -> do key <- insert User { userIdent = credsIdent creds
                                                         , userPassword = Nothing
+                                                        , userElo = 1200
                                                         , userNick = (credsIdent creds) } -- @TODO this causes the terrible default name when using Yahoo
                           Authenticated <$> (return key)
 

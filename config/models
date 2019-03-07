@@ -5,6 +5,7 @@ User
     ident Text
     password Text Maybe
     nick Text
+    elo Int default=1100
     UniqueNick nick
     UniqueUser ident
     deriving Typeable Show

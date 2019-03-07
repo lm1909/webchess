@@ -7,7 +7,14 @@
 <div .container>
     <div .row>
         <h3> Information
-        <p>Your data is protected with us <strong><span class="username">#{userNick user}</span></strong>!
+        <p>Nice to have your here on webchess, <strong><span class="username">#{userNick user}</span></strong>!
+        <table .table>
+            <tr>
+                <th> Nickname
+                <th> #{userNick user}
+            <tr>
+                <th> Elo
+                <th> #{userElo user}
 
     <div .row>
         <h3> Modify account information
