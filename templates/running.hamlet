@@ -1,0 +1,15 @@
+<div .masthead>
+    <div .container>
+        <div .row>
+            <h1 .header>
+                Running Games
+                <h3> all games currently active on webchess
+
+<div .container #runninggameslist>
+        <ul .list-group>
+            $case g
+                $of []
+                    <h2> Currently no running games
+                $of _
+                    $forall g <- runninggames
+                        <a href=@{GameR (keyIdGame g)} .list-group-item> #{showGame g}

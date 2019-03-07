@@ -172,6 +172,7 @@ instance Yesod App where
     isAuthorized RobotsR _ = return Authorized
     isAuthorized (StaticR _) _ = return Authorized
     isAuthorized (UserR _) _ = return Authorized
+    isAuthorized (RunningR) _ = return Authorized
     isAuthorized (GameR _) _ = return Authorized -- @TODO think about this, maybe implement private games?
 
     -- the profile route requires that the user is authenticated, so we

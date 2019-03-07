@@ -10,8 +10,14 @@ li {
 
 }
 
-#cardimg {
+#newcardimg {
     margin: auto;
+}
+
+#runningcardimg {
+    margin: auto;
+    width: 60%;
+    height: 60%; 
 }
 
 .masthead {
@@ -19,4 +25,15 @@ li {
     min-height: 0px;
     padding-bottom: 7%;
 
+}
+
+.card {
+
+    margin: 0% 5% 0% 5%;
+
+}
+
+div#cards {
+    margin: auto;
+    padding: 5%;
 }

@@ -13,3 +13,4 @@
 /user/#UserId UserR GET
 /game/#GameId GameR GET POST
 /new NewR GET POST
+/running/ RunningR GET
