@@ -70,13 +70,17 @@ legalMove mv@(Move _ o _) cd = case ((cd^.board) ! o) of
 legalKingDanger :: Move -> ChessData -> Legal ChessData
 legalKingDanger mv cd = if check $ (updateMove mv) cd then Invalid KingDanger else return cd
 
-legalPawnMove :: Move -> ChessData -> Legal ChessData
-legalPawnMove (Move _ (ox, oy) d) cd
-    | (d == (ox, oy+1)) && ((cd^.board) ! d == None) && (cd^.playerOnTurn == White)  = return cd -- no capturing
-    | (d == (ox, oy-1)) && ((cd^.board) ! d == None) && (cd^.playerOnTurn == Black)  = return cd -- no capturing
-    | ((cd^.board) ! d /= None) && (d `elem` [(ox+1, oy+1), (ox-1, oy+1)]) = return cd -- capturing
-    | otherwise = Invalid PawnMove
 -- @TODO: Pawn promotion, en passant capturing
+legalPawnMove :: Move -> ChessData -> Legal ChessData
+legalPawnMove (Move _ o@(ox, oy) d) cd = case cd^.playerOnTurn of
+    White | (d == (ox, oy+2)) && (o == (ox, 2)) && ((cd^.board) ! d == None) -> return cd -- first move -> two allowed
+          | (d == (ox, oy+1)) && ((cd^.board) ! d == None) -> return cd -- no capturing
+          | ((cd^.board) ! d /= None) && (d `elem` [(ox+1, oy+1), (ox-1, oy+1)]) -> return cd -- capturing
+          | otherwise -> Invalid PawnMove
+    Black | (d == (ox, oy-2)) && (o == (ox, 7)) && ((cd^.board) ! d == None) -> return cd -- first move -> two allowed
+          | (d == (ox, oy-1)) && ((cd^.board) ! d == None) -> return cd -- no capturing
+          | ((cd^.board) ! d /= None) && (d `elem` [(ox+1, oy-1), (ox-1, oy-1)]) -> return cd -- capturing
+          | otherwise -> Invalid PawnMove
 
 legalKingMove :: Move -> ChessData -> Legal ChessData
 legalKingMove (Move _ (ox, oy) d) cd = if (d `elem` [(ox+x, oy+y) | x <- [-1..1], y <- [-1..1]]) then return cd else Invalid KingMove
