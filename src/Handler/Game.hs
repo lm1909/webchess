@@ -87,13 +87,15 @@ renderSquare (x, y) e = case e of
                                                            height: 100px;
                                                            min-height: 60px;
                                                            background-color: #{color}; 
-                                          }|] -- @TODO make the size of the board adaptable (eg dont hardcode 80px)
+                                          }|] -- @TODO make the size of the board adaptable (eg dont hardcode 100px)
                                       toWidget [julius|
                                         var fst = true;
                                         function visclick(x, y){
                                             if (fst){
                                                 document.getElementById('hident2').value = x;
                                                 document.getElementById('hident3').value = y;
+                                                document.getElementById('hident4').value = '';
+                                                document.getElementById('hident5').value = '';
                                                 fst = false;
                                             } else {
                                                 document.getElementById('hident4').value = x;
