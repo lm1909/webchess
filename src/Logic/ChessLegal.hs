@@ -42,8 +42,10 @@ legalPlayer (Move _ o _) cd = case ((cd^.board) ! o) of
                                (Ent col _) -> if (col == cd^.playerOnTurn) then return cd else Invalid Player
 
 legalBounds :: Move -> ChessData -> Legal ChessData
-legalBounds (Move _ o d) cd = if (d < minb || d > maxb || o < minb || o > maxb) then Invalid Bounds else Valid cd
-                                where (minb, maxb) = bounds $ cd^.board
+legalBounds (Move _ o d) cd = if (primitiveInBounds o cd && primitiveInBounds d cd) then Valid cd else Invalid Bounds
+
+primitiveInBounds :: (Int, Int) -> ChessData -> Bool
+primitiveInBounds (ox, oy) cd = let ((minx, miny), (maxx, maxy)) = bounds $ cd^.board in (ox >= minx && oy >= miny && ox <= maxx && oy <= maxy)
 
 legalNoPiece :: Move -> ChessData -> Legal ChessData
 legalNoPiece (Move _ o _) cd = if ((cd^.board) ! o) == None then Invalid NoPiece else return cd
@@ -89,23 +91,33 @@ legalKnightMove :: Move -> ChessData -> Legal ChessData
 legalKnightMove (Move _ (ox, oy) d) cd = if (d `elem` [(ox+x, oy+y) | x <- [-1, 1], y <- [-2, 2]] ++ [(ox+x, oy+y) | x <- [-2, 2], y <- [-1, 1]]) then return cd else Invalid KnightMove
                                                      
 legalBishopMove :: Move -> ChessData -> Legal ChessData
-legalBishopMove (Move _ (ox, oy) d@(dx, dy)) cd = if (d `elem` [(ox+n, oy+n) | n <- [-8..8]] ++ [(ox+n, oy-n) | n <- [-8..8]]) && (and $ fmap ((==) None) $ fmap ((!) (cd^.board)) inter) then return cd else Invalid BishopMove
-    where inter = ([(ox+x*n, oy+y*n) | n <- [1..(abs dx-ox)]]) where x = sign dx-ox
-                                                                     y = sign dy-oy
+legalBishopMove (Move _ o d) cd = if d `elem` explore o bishopOneWayExploreFunctions cd then return cd else Invalid BishopMove
+
 -- assumes that origin of Move is rook
 legalRookMove :: Move -> ChessData -> Legal ChessData
-legalRookMove (Move _ (ox, oy) (dx, dy)) cd = if (ox == dx || oy == dy) && (and $ fmap ((==) None) $ fmap ((!) (cd^.board)) inter) then return cd else Invalid RookMove
-    where inter = (\xs -> take (length xs -1) xs) $ drop 1 ([(ox+x, oy+y) | x <- [dx-ox..0], y <- [dy-dx..0]] ++ [(ox+x, oy+y) | x <- [0..dx-ox], y <- [0..dy-dx]])
+legalRookMove (Move _ o d) cd = if (d `elem` explore o rookOneWayExploreFunctions cd) then return cd else Invalid RookMove
 
 legalQueenMove :: Move -> ChessData -> Legal ChessData
-legalQueenMove mv cd = case (legalBishopMove mv cd)  of 
-                     Valid _ -> return cd
-                     Invalid _ -> case (legalRookMove mv cd) of 
-                                    Valid _ -> return cd
-                                    Invalid _ -> Invalid QueenMove
+legalQueenMove (Move _ o d) cd = if (d `elem` explore o queenOneWayExploreFunctions cd) then return cd else Invalid QueenMove
 
-explore :: (Int, Int) -> ((Int, Int) -> [(Int, Int)]) -> ChessData
-explore = undefined
+rookOneWayExploreFunctions :: [((Int, Int) -> (Int, Int))]
+rookOneWayExploreFunctions = [(\(ox, oy) -> (ox+1, oy)), (\(ox, oy) -> (ox-1, oy)), (\(ox, oy) -> (ox, oy+1)), (\(ox, oy) -> (ox, oy-1))]
+
+bishopOneWayExploreFunctions :: [((Int, Int) -> (Int, Int))]
+bishopOneWayExploreFunctions = [(\(ox, oy) -> (ox+1, oy+1)), (\(ox, oy) -> (ox-1, oy-1)), (\(ox, oy) -> (ox-1, oy+1)), (\(ox, oy) -> (ox+1, oy-1))]
+
+queenOneWayExploreFunctions :: [((Int, Int) -> (Int, Int))]
+queenOneWayExploreFunctions = rookOneWayExploreFunctions ++ bishopOneWayExploreFunctions
+
+explore :: (Int, Int) -> [((Int, Int) -> (Int, Int))] -> ChessData -> [(Int, Int)]
+explore o fs cd = concat $ map (\oneWExplFun -> oneWayExplore o oneWExplFun cd) fs
+
+-- NOTE: this function includes pieces of ones own!
+oneWayExplore :: (Int, Int) -> ((Int, Int) -> (Int, Int)) -> ChessData -> [(Int, Int)]
+oneWayExplore o f cd
+    | not (primitiveInBounds (f o) cd) = []
+    | (primitiveInBounds (f o) cd) && not ((cd^.board) ! (f o) == None) = [f o]
+    | otherwise = (f o):(oneWayExplore (f o) f cd)
 
 -- determines if the player at turn is in check
 check :: ChessData -> Bool
