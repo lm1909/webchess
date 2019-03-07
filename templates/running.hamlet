@@ -7,7 +7,7 @@
 
 <div .container #runninggameslist>
         <ul .list-group>
-            $case g
+            $case runninggames
                 $of []
                     <h2> Currently no running games
                 $of _
