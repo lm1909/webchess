@@ -30,7 +30,6 @@ postNewR = do ((result, widget), enctype) <- runFormPost gameForm
                                                           defaultLayout $ $(widgetFile "new")
                                             (Just (Entity key val)) -> do gameid <- runDB $ insert Game {gamePlayer = id,
                                                                                                          gameOpponent = key,
-                                                                                                         gamePlayerOnTurn = White,
                                                                                                          gameGameStatus = Running,
                                                                                                          gameHistory = historyToText [] }
                                                                           redirect (GameR gameid) 
