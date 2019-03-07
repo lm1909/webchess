@@ -10,7 +10,7 @@ import           Logic.ChessData
 
 
 data Legal x = Valid x | Invalid Reason deriving Show
-data Reason = Bounds | Player | NoPiece | TakeOwn | NoMove | QueenMove | KingMove | RookMove | BishopMove | PawnMove | KnightMove | KingDanger deriving Show
+data Reason = Bounds | Player | NoPiece | TakeOwn | NoMove | QueenMove | KingMove | RookMove | BishopMove | PawnMove | KnightMove | KingDanger | GameOver deriving Show
 
 instance Functor Legal where
   fmap f (Valid cd)  = Valid $ f cd
@@ -24,7 +24,7 @@ instance Monad Legal where
   (>>=) (Invalid r) _ = Invalid r
 
 legal :: Move -> ChessData -> Legal ChessData -- @TODO add checkmate
-legal mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoPiece mv) >>= (legalTakeOwn mv) >>= (legalMove mv) >>= (legalKingDanger mv)
+legal mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoPiece mv) >>= (legalTakeOwn mv) >>= (legalMove mv) >>= (legalKingDanger mv) >>= (legalGameOver mv)
 
 -- this Rulesset without the check control is needed for the legalKingDanger Rule (otherwise a cycle would ensue)
 legalCheckmate :: Move -> ChessData -> Legal ChessData
@@ -57,6 +57,11 @@ legalTakeOwn (Move _ _ d) cd = case ((cd^.board) ! d) of
 
 legalNoMove :: Move -> ChessData -> Legal ChessData
 legalNoMove (Move _ o d) cd = if (o == d) then Invalid NoMove else return cd
+
+legalGameOver :: Move -> ChessData -> Legal ChessData
+legalGameOver _ cd = case (cd^.status) of
+                        Running -> return cd
+                        _ -> Invalid GameOver
 
 legalMove :: Move -> ChessData -> Legal ChessData
 legalMove mv@(Move _ o _) cd = case ((cd^.board) ! o) of
@@ -136,4 +141,14 @@ allMovesForPlayer col cd = concat $ [allMovesFromPos p cd' | p <- getAllPosition
 checkMate :: Color -> ChessData -> Bool
 checkMate col cd = check cd col && ((length $ allMovesForPlayer col cd) == 0)
 
+updateGameStatus :: ChessData -> ChessData  
+updateGameStatus cd = if checkMate (cd^.playerOnTurn) cd then set status (Finished (Winner (switchColor (cd^.playerOnTurn)))) cd else set status (Running) cd
 
+-- Warning: this does not update GameStatus
+setMove :: Move -> ChessData -> ChessData
+setMove mv cd = updateGameStatus <$> addMoveToHistory mv $ updateMove mv $ updateOffPieces mv $ updatePlayerOnTurn cd
+
+-- Warning: does not check if moves are legal
+gameFromMoves :: [Move] -> ChessData
+gameFromMoves []       = newGame
+gameFromMoves (mv:mvs) = setMove mv (gameFromMoves mvs)

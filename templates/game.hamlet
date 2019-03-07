@@ -21,9 +21,13 @@
                         ^{renderOffPieces $ _offPieces cd}
 
                 <div .row>
-                    <form method=post action="#" enctype=#{enctype}>
-                        ^{movewidget}
-
+                    $case (_status cd)
+                        $of (Running)
+                            <form method=post action="#" enctype=#{enctype}>
+                                ^{movewidget}
+                        $of (Finished (Winner col))
+                            <h1 id="winnotice" .text-center> Game finished! Winner: #{show col}
+                            
             <div .tab-pane id="history">
                 <h2> All moves in the game:
                 <ul .list-group>
@@ -32,8 +36,14 @@
 
     <div .row>
         <h3> Advanced debug information
-        In CHECK: #{show $ Logic.ChessLegal.check cd (_playerOnTurn cd)}
-        <code> King Position: White #{show $ getKingPosition cd White} Black #{show $ getKingPosition cd Black}
+        <pre>
+            <code>In CHECK: #{show $ Logic.ChessLegal.check cd (_playerOnTurn cd)}
+            <code>CHECKMATE: White #{show $ checkMate White cd}  Black #{show $ checkMate Black cd}
+            <code> number of moves: White #{show $ (Prelude.length $ allMovesForPlayer (White) cd)}
+                   Black #{show $ (Prelude.length $ allMovesForPlayer (Black) cd)}
+
+        <pre>
+            <code> King Position: White #{show $ getKingPosition cd White} Black #{show $ getKingPosition cd Black}
         <pre>
             <code>
                 #{show $ allMovesForPlayer White cd}

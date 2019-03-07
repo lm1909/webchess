@@ -31,3 +31,10 @@
     padding: 2% 0px 2% 0px;
 
 }
+
+#winnotice {
+    
+    margin: auto;
+
+
+}

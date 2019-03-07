@@ -14,6 +14,7 @@ import Logic.ChessDBConnector
 import Logic.ChessLegal
 import Data.Text as DT
 import Text.Julius (RawJS (..))
+import Logic.Chess
 
 data MoveForm = MoveForm {ox :: Int, oy :: Int, dx :: Int, dy :: Int}
 
@@ -60,10 +61,9 @@ postGameR gameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm
                       let cd = gameToChessData game
                       case result of
                         FormSuccess (MoveForm ox oy dx dy) -> do let move = Move (1 + (Prelude.length $ _history $ cd)) (ox,oy) (dx,dy) 
-                                                                 case legal move cd of 
-                                                                    Valid _ -> do runDB $ update gameId [GameHistory =. (historyToText $ (move:(_history cd)))]
-                                                                                  setMessage $ toHtml ("Move sent" :: Text)
-                                                                                  redirect (GameR gameId)
+                                                                 case makeMove move cd of 
+                                                                    Valid cd' -> do runDB $ update gameId [GameHistory =. (historyToText $ (_history cd'))]
+                                                                                    redirect (GameR gameId)
                                                                     Invalid r -> do setMessage $ toHtml ("Move invalid: " Prelude.++ show r)
                                                                                     redirect (GameR gameId)
                         FormFailure f -> do setMessage $ toHtml ("Failure " Prelude.++ show f)

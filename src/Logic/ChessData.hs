@@ -9,7 +9,7 @@ import           Data.Array
 import Database.Persist.TH
 
 
-data GameStatus = Running | Finished deriving (Show, Read, Eq)
+data GameStatus = Running | Finished Result deriving (Show, Read, Eq)
 
 data Result = Draw | Winner Color deriving (Show, Read, Eq)
 data Color = Black | White deriving (Eq, Read, Show)
@@ -119,13 +119,4 @@ getKingPosition :: ChessData -> Color -> (Int, Int)
 getKingPosition cd col = (filter (\i -> corking ((cd^.board) ! i)) [(x, y) | x <- [1..8], y <- [1..8]]) !! 0
     where corking = \e -> case e of (Ent c King) -> c == col
                                     _ -> False
-
--- @TODO update game status
-setMove :: Move -> ChessData -> ChessData
-setMove mv cd = addMoveToHistory mv $ updateMove mv $ updateOffPieces mv $ updatePlayerOnTurn cd
-
--- Warning: does not check if moves are legal
-gameFromMoves :: [Move] -> ChessData
-gameFromMoves []       = newGame
-gameFromMoves (mv:mvs) = setMove mv (gameFromMoves mvs)
 
