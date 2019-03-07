@@ -23,8 +23,9 @@
                 <div .row>
                     $case (_status cd)
                         $of (Running)
-                            <form method=post action="#" enctype=#{enctype}>
-                                ^{movewidget}
+                            $if ((id == gamePlayer game) || (id == gameOpponent game)) 
+                                <form method=post action="#" enctype=#{enctype}>
+                                    ^{movewidget}
                         $of (Finished (Winner col))
                             <h1 id="winnotice" .text-center> Game finished! Winner: #{show col}
                             
