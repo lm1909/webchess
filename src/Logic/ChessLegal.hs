@@ -127,7 +127,7 @@ check cd col = or $ fmap check_bool $ (fmap (\p -> Move 0 p king) (getAllPositio
           cd' = set playerOnTurn (switchColor col) cd
 
 allMovesFromPos :: (Int, Int) -> ChessData -> [Move]
-allMovesFromPos o cd = filter (\m -> legalWrapper legalCheckmate m cd) $ [Move (-1) o (dx, dy) | dx <- [1..8], dy <- [1..8]]
+allMovesFromPos o cd = filter (\m -> legalWrapper legal m cd) $ [Move (-1) o (dx, dy) | dx <- [1..8], dy <- [1..8]]
 
 allMovesForPlayer :: Color -> ChessData -> [Move]
 allMovesForPlayer col cd = concat $ [allMovesFromPos p cd' | p <- getAllPositions cd' col]
