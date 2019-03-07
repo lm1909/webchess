@@ -62,7 +62,8 @@ postGameR gameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm
                       case result of
                         FormSuccess (MoveForm ox oy dx dy) -> do let move = Move (1 + (Prelude.length $ _history $ cd)) (ox,oy) (dx,dy) 
                                                                  case makeMove move cd of 
-                                                                    Valid cd' -> do runDB $ update gameId [GameHistory =. (historyToText $ (_history cd'))]
+                                                                    Valid cd' -> do runDB $ do update gameId [GameHistory =. (historyToText $ (_history cd'))]
+                                                                                               update gameId [GameGameStatus =. (_status cd')]
                                                                                     redirect (GameR gameId)
                                                                     Invalid r -> do setMessage $ toHtml ("Move invalid: " Prelude.++ show r)
                                                                                     redirect (GameR gameId)
