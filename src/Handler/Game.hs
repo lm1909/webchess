@@ -136,13 +136,11 @@ renderOffPieces :: [(Piece, Color)] -> Widget
 renderOffPieces opcs = do toWidget [whamlet| <div id="offpieces">
                                                  <table>
                                                     <tr> 
-                                                        <td><b>White</b>
                                                         $forall (wp, wc) <- whites
                                                             <td>
                                                                 <div id="piececontainer">
                                                                     <img src=@{iconAccessor wc wp} id="icon" style="margin: auto">
                                                     <tr>
-                                                        <td><b>Black</b>
                                                         $forall (bp, bc) <- blacks
                                                             <td>
                                                                 <div id="piececontainer">
