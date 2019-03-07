@@ -13,6 +13,7 @@ import Data.Array
 import Logic.ChessDBConnector
 import Logic.ChessLegal
 import Data.Text as DT
+import Text.Julius (RawJS (..))
 
 data MoveForm = MoveForm {ox :: Int, oy :: Int, dx :: Int, dy :: Int}
 
@@ -79,13 +80,28 @@ renderSquare (x, y) e = case e of
                                                                                         height: 100%;} |]
  where  renderSquareHelper :: Widget -> Widget
         renderSquareHelper inner = do idtag <- newIdent
-                                      toWidget [whamlet| <div .border id=#{idtag}> ^{inner}|]
+                                      let funstring = "visclick(" Prelude.++ show x Prelude.++ "," Prelude.++ show y Prelude.++ ")"
+                                      toWidget [whamlet| <div .border id=#{idtag} onclick="#{funstring}"> ^{inner}|]
                                       toWidget [lucius| ##{idtag} {
                                                            width: 100px;
                                                            height: 100px;
                                                            min-height: 60px;
                                                            background-color: #{color}; 
                                           }|] -- @TODO make the size of the board adaptable (eg dont hardcode 80px)
+                                      toWidget [julius|
+                                        var fst = true;
+                                        function visclick(x, y){
+                                            if (fst){
+                                                document.getElementById('hident2').value = x;
+                                                document.getElementById('hident3').value = y;
+                                                fst = false;
+                                            } else {
+                                                document.getElementById('hident4').value = x;
+                                                document.getElementById('hident5').value = y;
+                                                fst = true;
+                                            }
+                                        } 
+                                      |] -- @TODO hident is not stable, this is very ugly
                                        where color = if (((x+y) `mod` 2) == 1) then ("#f8f9fa" :: String) else ("#6c757d" :: String)
                                         -- colors taken from bootstrap standard palette
 
