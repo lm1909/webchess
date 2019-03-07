@@ -1,0 +1,15 @@
+<div .masthead>
+    <div .container>
+        <div .row>
+            <h1 .header>
+                Ranking
+                <h3> Ranking of the 100 best chess players on webchess
+
+<div .container #rankinglist>
+        <ul .list-group>
+            $case besthundredplayers
+                $of []
+                    <h2> No players available
+                $of _
+                    $forall p <- besthundredplayers
+                        <a href=@{UserR (keyIdPlayer p)} .list-group-item> #{showPlayer p}

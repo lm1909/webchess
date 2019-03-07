@@ -19,6 +19,12 @@
             <h4 .card-title>Running games
             <p .card-text>List all games that are currently active on webchess.
             <a href=@{RunningR} .btn .btn-primary>See games
+        <div .col-lg-3 .card .stretched-link style="width: 16rem;">
+          <img .card-img-top src=@{StaticR svg_star_svg} alt="" #rankingcardimg>
+          <div .card-body>
+            <h4 .card-title>Ranking list
+            <p .card-text>Show a highscore ranking list of the top 100 performing chess players on webchess
+            <a href=@{RankingR} .btn .btn-primary>Get ranking
 
 
 

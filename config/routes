@@ -14,3 +14,4 @@
 /game/#GameId GameR GET POST
 /new NewR GET POST
 /running/ RunningR GET
+/ranking RankingR GET

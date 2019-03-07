@@ -12,12 +12,21 @@ li {
 
 #newcardimg {
     margin: auto;
+    width: 80px;
+    height: 80px;
 }
 
 #runningcardimg {
     margin: auto;
-    width: 60%;
-    height: 60%; 
+    width: 80px;
+    height: 80px;
+}
+
+#rankingcardimg {
+    margin: auto;
+    width: 80px;
+    height: 80px;
+
 }
 
 .masthead {
