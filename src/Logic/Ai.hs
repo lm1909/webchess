@@ -6,13 +6,26 @@ import Logic.ChessLegal
 import Data.Array
 import Control.Lens
 
+
+
 -- the bigger the int, the better the situation for white
-evaluate :: ChessData -> Int
-evaluate cd = foldl1 (+) [ evalSquare ((cd^.board) ! (x, y)) (x, y) | x <- [1..8], y <- [1..8]]
+-- stable
+gameEvaluate :: ChessData -> Int
+gameEvaluate cd = foldl1 (+) [ evalSquare ((cd^.board) ! (x, y)) (x, y) | x <- [1..8], y <- [1..8]]
     where evalSquare None _ = 0
-          evalSquare (Ent col pc) p = (acc col p) (pieceSquareTable pc)
+          evalSquare (Ent col pc) p = (acc col p) (pieceSquareTable pc) + (if (col==White) then 1 else -1)*(pieceValue pc)
             where acc White (x, y) = (\a -> a !! ((x-1)+((y-1)*8)))
                   acc Black (x, y) = (\a -> -1*(a !! (((9-x)-1)+(((9-y)-1)*8)))   )
+
+-- gives value of a piece in centipawns
+-- taken from the excellent https://www.chessprogramming.org/Simplified_Evaluation_Function
+pieceValue :: Piece -> Int
+pieceValue Pawn = 100
+pieceValue Knight = 320
+pieceValue Bishop = 330
+pieceValue Rook = 500
+pieceValue Queen = 900
+pieceValue King = 20000
 
 -- All tables taken from the excellent https://www.chessprogramming.org/Simplified_Evaluation_Function
 -- NOTE: tables are mirrored with respect to website
