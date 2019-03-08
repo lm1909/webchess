@@ -16,6 +16,7 @@ import Data.Text as DT
 import Text.Julius (RawJS (..))
 import Logic.Chess
 import Control.Lens
+import Logic.Ai
 
 data MoveForm = MoveForm {ox :: Int, oy :: Int, dx :: Int, dy :: Int}
 

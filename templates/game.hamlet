@@ -37,6 +37,7 @@
 
     <div .row>
         <h3> Advanced debug information
+        <code> Game Evaluation (big good for white): #{show $ gameEvaluate cd}
         <pre>
             <code>In CHECK: #{show $ Logic.ChessLegal.check cd (_playerOnTurn cd)}
             <code>CHECKMATE: White #{show $ checkMate White cd}  Black #{show $ checkMate Black cd}
