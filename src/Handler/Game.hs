@@ -31,8 +31,8 @@ getGameR gameId = do game <- runDB $ get404 gameId
                      (player, opponent) <- runDB $ do player <- get404 (gamePlayer game) -- @TODO is a 404 really optimal here?
                                                       opponent <- get404 (gameOpponent game)
                                                       return (player, opponent)
+                     let moveauthorized = (id == gamePlayer game) || (id == gameOpponent game)
                      defaultLayout $ do setTitle "Game"
-                                        addScriptRemote "http://code.jquery.com/jquery-latest.js" -- this is necessary for the live update view js
                                         $(widgetFile "game")
 
 

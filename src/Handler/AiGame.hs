@@ -28,12 +28,10 @@ getAiGameR :: AiGameId -> Handler Html
 getAiGameR aiGameId = do aigame <- runDB $ get404 aiGameId
                          (id, user) <- requireAuthPair
                          ((res, movewidget), enctype) <- runFormGet moveForm
-                         liftIO $ System.IO.putStrLn $ show aigame
-                         liftIO $ System.IO.putStrLn $ show $ aiGameToChessData aigame
                          let cd = aiGameToChessData aigame
                          player <- runDB $ get404 (aiGamePlayer aigame) -- @TODO is a 404 really optimal here?
+                         let moveauthorized = id == aiGamePlayer aigame
                          defaultLayout $ do setTitle "AI Match"
-                                            addScriptRemote "http://code.jquery.com/jquery-latest.js" -- this is necessary for the live update view js
                                             $(widgetFile "aigame")
 
 postAiGameR :: AiGameId -> Handler Html

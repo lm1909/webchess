@@ -5,33 +5,7 @@
                 Classic chess
             <h2> #{userNick player} vs #{userNick opponent}
 
-<div .container>
-    <div .container id="exTab">
-        <ul .nav .nav-tabs>
-            <li .active>
-                <a href="#game" data-toggle="tab"> Game
-            <li>
-                <a href="#history" data-toggle="tab"> History
-            
-        <div .tab-content>
-            <div .tab-pane .active id="game">
-                <div .row>
-                    ^{renderChessContainer cd}
-
-                <div .row>
-                    $case (_status cd)
-                        $of (Running)
-                            $if ((id == gamePlayer game) || (id == gameOpponent game)) 
-                                <form method=post action="#" enctype=#{enctype}>
-                                    ^{movewidget}
-                        $of (Finished (Winner col))
-                            <h1 id="winnotice" .text-center> Game finished! Winner: #{show col}
-                            
-            <div .tab-pane id="history">
-                <h2> All moves in the game:
-                <ul .list-group>
-                    $forall m <- _history cd
-                        <li .list-group-item>#{show m}  
+^{renderGameStage moveauthorized cd movewidget enctype}
 
     <div .row>
         <h3> Advanced debug information

@@ -4,7 +4,7 @@
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Render.HtmlRender (renderChessContainer, moveForm, MoveForm(MoveForm)) where
+module Render.HtmlRender (renderGameStage, moveForm, MoveForm(MoveForm)) where
 
 
 import Import
@@ -15,9 +15,9 @@ import Control.Lens
 
 
 renderChessContainer :: ChessData -> Widget
-renderChessContainer cd = do toWidget [whamlet| <div .container id="chesscontainer">
-                                                   ^{renderBoard $ _board cd}
-                                                   ^{renderOffPieces $ _offPieces cd}|]
+renderChessContainer cd = toWidget [whamlet| <div .container id="chesscontainer">
+                                                 ^{renderBoard $ _board cd}
+                                                 ^{renderOffPieces $ _offPieces cd}|]
 
 data MoveForm = MoveForm {ox :: Int, oy :: Int, dx :: Int, dy :: Int}
 
@@ -125,3 +125,35 @@ renderOffPieces opcs = do toWidget [whamlet| <div id="offpieces">
                                    |] -- @TODO dont hardcode the pixel size
                          where whites = (Prelude.filter (\(_, c) -> (c == White)) opcs)
                                blacks = (Prelude.filter (\(_, c) -> (c == Black)) opcs)
+
+renderGameStage :: Bool -> ChessData -> Widget -> Enctype -> Widget
+renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div .container>
+                                                                              <div .container id="exTab">
+                                                                                  <ul .nav .nav-tabs>
+                                                                                      <li .active>
+                                                                                          <a href="#game" data-toggle="tab"> Game
+                                                                                      <li>
+                                                                                          <a href="#history" data-toggle="tab"> History
+                                                                                      
+                                                                                  <div .tab-content>
+                                                                                      <div .tab-pane .active id="game">
+                                                                                          <div .row>
+                                                                                              ^{renderChessContainer cd}
+
+                                                                                          <div .row>
+                                                                                              $case (_status cd)
+                                                                                                  $of (Running)
+                                                                                                      $if (moveauth) 
+                                                                                                          <form method=post action="#" enctype=#{enctype}>
+                                                                                                              ^{moveformwidget}
+                                                                                                  $of (Finished (Winner col))
+                                                                                                      <h1 id="winnotice" .text-center> Game finished! Winner: #{show col}
+                                                                                                      
+                                                                                      <div .tab-pane id="history">
+                                                                                          <h2> All moves in the game:
+                                                                                          <ul .list-group>
+                                                                                              $forall m <- _history cd
+                                                                                                  <li .list-group-item>#{show m}
+                                                                 |]
+                                                        addScriptRemote "http://code.jquery.com/jquery-latest.js" -- this is necessary for the live update view js
+                                                        $(widgetFile "autoload") 
