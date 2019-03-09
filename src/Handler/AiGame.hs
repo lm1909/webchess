@@ -3,11 +3,15 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Handler.AiGame where
 
 import Import
 import Control.Lens
+import Control.Concurrent
+import System.IO
+import Database.Persist.Sqlite
 
 import Render.HtmlRender
 import Logic.Ai
@@ -24,6 +28,8 @@ getAiGameR :: AiGameId -> Handler Html
 getAiGameR aiGameId = do aigame <- runDB $ get404 aiGameId
                          (id, user) <- requireAuthPair
                          ((res, movewidget), enctype) <- runFormGet moveForm
+                         liftIO $ System.IO.putStrLn $ show aigame
+                         liftIO $ System.IO.putStrLn $ show $ aiGameToChessData aigame
                          let cd = aiGameToChessData aigame
                          player <- runDB $ get404 (aiGamePlayer aigame) -- @TODO is a 404 really optimal here?
                          defaultLayout $ do setTitle "AI Match"
@@ -42,6 +48,12 @@ postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken move
                                                                                      case makeMove move cd of 
                                                                                           Valid cd' -> do runDB $ do update aiGameId [AiGameHistory =. (historyToText $ (_history cd'))]
                                                                                                                      update aiGameId [AiGameGameStatus =. (_status cd')]
+                                                                                                          runInnerHandler <- handlerToIO
+                                                                                                          liftIO $ forkIO $ runInnerHandler $ do
+                                                                                                                    let cd'' = setMove (bestMove Easy cd') cd' -- AI calculates & does its move
+                                                                                                                    runDB $ do update aiGameId [AiGameGameStatus =. (_status cd'')]
+                                                                                                                               update aiGameId [AiGameHistory =. (historyToText $ (_history cd''))]
+                                                                                                                    redirect (AiGameR aiGameId)
                                                                                                           redirect (AiGameR aiGameId)
                                                                                           Invalid r -> do setMessage $ toHtml ("Move invalid: " Prelude.++ show r)
                                                                                                           redirect (AiGameR aiGameId)
