@@ -7,7 +7,7 @@ import Data.Array
 import Control.Lens
 import Data.Foldable
 
-data AIDiff = Random | Easy deriving (Show, Read, Eq, Enum)
+data AIDiff = Random | Easy deriving (Show, Read, Eq, Enum, Bounded)
 
 optimisationDirection :: Color -> Int
 optimisationDirection Black = -1

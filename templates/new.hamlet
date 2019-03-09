@@ -1,3 +1,21 @@
-<form method=post action=@{NewR} enctype=#{enctype}>
-    ^{widget}
-    <button .button class="btn btn-primary btn-lg btn-block">Start Game
+
+<div .container>
+    <div .container id="exTab">
+        <ul .nav .nav-tabs>
+            <li .active>
+                <a href="#human" data-toggle="tab"> Human match
+            <li>
+                <a href="#ai" data-toggle="tab"> AI match
+            
+        <div .tab-content>
+            <div .tab-pane .active id="human">
+                <h3> Create a new game against another human user
+                <form method=post action=@{NewHumanR} enctype=#{humanenctype}>
+                    ^{humanwidget}
+                    <button .button class="btn btn-primary btn-lg btn-block">Start Game
+                            
+            <div .tab-pane #ai>
+                <h3> Create a new AI match
+                <form method=post action=@{NewAiR} enctype=#{aienctype}>
+                    ^{aiwidget}
+                    <button .button class="btn btn-primary btn-lg btn-block">Start Game

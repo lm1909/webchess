@@ -11,8 +11,13 @@
 
 /profile ProfileR GET POST
 /user/#UserId UserR GET
+
 /game/#GameId GameR GET POST
-/new NewR GET POST
+/aigame/#AiGameId AiGameR GET POST
+
+/new NewR GET
+/new/ai NewAiR POST
+/new/human NewHumanR POST
+
 /running/ RunningR GET
 /ranking RankingR GET
-/aigame/#AiGameId AiGameR GET POST

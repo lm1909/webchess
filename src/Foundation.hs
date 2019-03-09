@@ -185,6 +185,9 @@ instance Yesod App where
                              return $ case auth of
                                  Nothing -> AuthenticationRequired
                                  Just _ -> Authorized
+    isAuthorized NewAiR x = isAuthorized NewR x
+    isAuthorized NewHumanR x = isAuthorized NewR x
+
 
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
