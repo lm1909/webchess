@@ -5,13 +5,61 @@ import Logic.ChessLegal
 
 import Data.Array
 import Control.Lens
+import Data.Foldable
 
 
+optimisationDirection :: Color -> Int
+optimisationDirection Black = -1
+optimisationDirection White = 1
+
+-- negamax :: Int -> ChessData -> (Move, Int)
+-- negamax n _
+--     | n < 0 = error "Negamax: Cannot go below search depth of 0"
+-- negamax 0 cd = maximumBy maxtuple $ fmap (\m -> (m, (optimisationDirection (cd^.playerOnTurn)) * (gameEvaluate (setMove m cd)))) (allMovesForPlayer (cd^.playerOnTurn) cd)
+-- negamax n cd = maximumBy maxtuple $ fmap (opti . negamaxmapper) ((allMovesForPlayer (cd^.playerOnTurn)) cd)
+--     where negamaxmapper = (\m -> negamax (n-1) (setMove m cd))
+--           opti = \(c, i) -> (c, optimisationDirection (cd^.playerOnTurn)*i)
+
+maxtuple :: (a, Int) -> (a, Int) -> Ordering
+maxtuple (_, i) (_, j) = compare i j
+
+-- minmax :: Int -> Color -> ChessData -> Int
+-- minmax 0 c cd = (optimisationDirection col) * (gameEvaluate cd)
+-- minmax n c cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
+--                     [] -> (optimisationDirection c) * (optimisationDirection (cd^.playerOnTurn)) (-1000000000)
+--                     mvs -> $ fmap (minmax (n-1)) mvs
+
+minmaxRankings :: ChessData -> [(Move, Int)]
+minmaxRankings cd =  (fmap (\m -> (m, (minmax' 2 (cd^.playerOnTurn)) $ setMove m cd)) (allMovesForPlayer (_playerOnTurn cd) cd))
+
+bestMove :: ChessData -> Move
+bestMove cd = fst $ maximumBy maxtuple (minmaxRankings cd)
+
+movePair :: ChessData -> (Move, Int)
+movePair cd = maximumBy maxtuple (minmaxRankings cd)
+
+-- White is the player for maximisation
+minmax :: Int -> ChessData -> Int
+minmax 0 cd = (gameEvaluate cd)
+minmax n cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
+                    [] -> (optimisationDirection (cd^.playerOnTurn)) * (-1000000000)
+                    mvs -> (optifun (cd^.playerOnTurn)) $ fmap (\m -> minmax (n-1) (setMove m cd)) mvs
+    where optifun c = if c==White then maximum else minimum 
+
+minmax' :: Int -- ^ search depth
+            -> Color -- ^ color of the player which is trying to optimize his move
+            -> ChessData -- ^ chess situation
+            -> Int -- ^ index for how good the situation is
+minmax' 0 maxplayer cd = (optimisationDirection maxplayer) * (gameEvaluate cd)
+minmax' n maxplayer cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
+                            [] -> (optimisationDirection maxplayer) * (optimisationDirection (cd^.playerOnTurn)) * (-1000000000)
+                            mvs -> (optifun (cd^.playerOnTurn)) $ fmap (\m -> minmax' (n-1) maxplayer (setMove m cd)) mvs
+    where optifun c = if c==maxplayer then maximum else minimum 
 
 -- the bigger the int, the better the situation for white
 -- stable
 gameEvaluate :: ChessData -> Int
-gameEvaluate cd = foldl1 (+) [ evalSquare ((cd^.board) ! (x, y)) (x, y) | x <- [1..8], y <- [1..8]]
+gameEvaluate cd = sum [ evalSquare ((cd^.board) ! (x, y)) (x, y) | x <- [1..8], y <- [1..8]]
     where evalSquare None _ = 0
           evalSquare (Ent col pc) p = (acc col p) (pieceSquareTable pc) + (if (col==White) then 1 else -1)*(pieceValue pc)
             where acc White (x, y) = (\a -> a !! ((x-1)+((y-1)*8)))

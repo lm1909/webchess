@@ -144,7 +144,6 @@ checkMate col cd = check cd col && ((length $ allMovesForPlayer col cd) == 0)
 updateGameStatus :: ChessData -> ChessData  
 updateGameStatus cd = if checkMate (cd^.playerOnTurn) cd then set status (Finished (Winner (switchColor (cd^.playerOnTurn)))) cd else set status (Running) cd
 
--- Warning: this does not update GameStatus
 setMove :: Move -> ChessData -> ChessData
 setMove mv cd = updateGameStatus <$> addMoveToHistory mv $ updateMove mv $ updateOffPieces mv $ updatePlayerOnTurn cd
 

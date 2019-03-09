@@ -37,6 +37,8 @@
 
     <div .row>
         <h3> Advanced debug information
+        <code> best move:  #{show $ bestMove cd}
+        <code> minmax all move: #{show $ minmaxRankings cd}
         <code> Game Evaluation (big good for white): #{show $ gameEvaluate cd}
         <pre>
             <code>In CHECK: #{show $ Logic.ChessLegal.check cd (_playerOnTurn cd)}
