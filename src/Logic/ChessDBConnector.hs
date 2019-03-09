@@ -4,6 +4,7 @@
 module Logic.ChessDBConnector where
 
 import Logic.ChessData
+import Logic.Ai
 import           qualified Data.Text as DT
 import Logic.ChessOutput
 import Database.Persist.TH
@@ -11,6 +12,7 @@ import Database.Persist.TH
 -- make custom Entities usable in Persist
 derivePersistField "GameStatus"
 derivePersistField "Color"
+derivePersistField "AIDiff"
 
 
 historyToText :: [Move] -> DT.Text

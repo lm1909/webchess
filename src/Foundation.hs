@@ -174,7 +174,8 @@ instance Yesod App where
     isAuthorized (UserR _) _ = return Authorized
     isAuthorized (RunningR) _ = return Authorized
     isAuthorized (RankingR) _ = return Authorized
-    isAuthorized (GameR _) _ = return Authorized -- @TODO think about this, maybe implement private games?
+    isAuthorized (GameR _) _ = return Authorized -- @TODO idea: private games?
+    isAuthorized (AiGameR _) _ = return Authorized -- @TOD idea: private games?
 
     -- the profile route requires that the user is authenticated, so we
     -- delegate to that function

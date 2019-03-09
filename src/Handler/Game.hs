@@ -6,7 +6,7 @@
 
 module Handler.Game where
 
-import           Control.Applicative
+import Control.Applicative
 import Import
 import Logic.ChessData
 import Data.Array

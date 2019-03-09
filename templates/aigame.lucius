@@ -1,0 +1,41 @@
+#chesstable {
+
+    margin: auto;
+
+}
+
+#offpieces {
+    
+    margin: auto;
+    padding 2% 2% 2% 2%;
+
+
+}
+
+#chesscontainer {
+
+    margin: auto;
+    padding: 2% 2% 2% 2%;
+
+}
+
+.masthead {
+
+    max-height: 120px; 
+
+}
+
+#exTab {
+
+    color: whiteM
+    padding: 2% 0px 2% 0px;
+
+}
+
+#winnotice {
+    
+    margin: auto;
+
+
+}
+

@@ -22,3 +22,9 @@ Game
     history Text
     gameStatus GameStatus  
     deriving Show
+
+AiGame
+    player UserId
+    history Text
+    gameStatus GameStatus
+    deriving Show

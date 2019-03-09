@@ -1,0 +1,63 @@
+<div .masthead>
+    <div .container>
+        <div .row>
+            <h1 .header>
+                AI Match
+            <h2> #{userNick player}
+
+<div .container>
+    <div .container id="exTab">
+        <ul .nav .nav-tabs>
+            <li .active>
+                <a href="#game" data-toggle="tab"> Game
+            <li>
+                <a href="#history" data-toggle="tab"> History
+            
+        <div .tab-content>
+            <div .tab-pane .active id="game">
+                <div .row>
+                    ^{renderChessContainer cd}
+
+                <div .row>
+                    $case (_status cd)
+                        $of (Running)
+                            $if (id == aiGamePlayer aigame) 
+                                <form method=post action="#" enctype=#{enctype}>
+                                    ^{movewidget}
+                        $of (Finished (Winner col))
+                            <h1 id="winnotice" .text-center> Game finished! Winner: #{show col}
+                            
+            <div .tab-pane id="history">
+                <h2> All moves in the game:
+                <ul .list-group>
+                    $forall m <- _history cd
+                        <li .list-group-item>#{show m}  
+
+    <div .row>
+        <h3> Advanced debug information
+        <code> best move:  #{show $ "bestMove cd"}
+        <code> minmax all move: #{show $ "minmaxRankings cd"}
+        <code> Game Evaluation (big good for white): #{show $ gameEvaluate cd}
+        <pre>
+            <code>In CHECK: #{show $ Logic.ChessLegal.check cd (_playerOnTurn cd)}
+            <code>CHECKMATE: White #{show $ checkMate White cd}  Black #{show $ checkMate Black cd}
+            <code> number of moves: White #{show $ (Prelude.length $ allMovesForPlayer (White) cd)}
+                   Black #{show $ (Prelude.length $ allMovesForPlayer (Black) cd)}
+
+        <pre>
+            <code> King Position: White #{show $ getKingPosition cd White} Black #{show $ getKingPosition cd Black}
+        <pre>
+            <code>
+                #{show $ allMovesForPlayer White cd}
+            <code>
+                #{show $ allMovesForPlayer Black cd}
+        <pre>
+            <code>
+                White #{show $ getAllPositions cd White}
+                Black #{show $ getAllPositions cd Black}
+        <pre>
+            <code>
+                #{show aigame}
+        <pre>
+            <code>
+                #{show cd}
