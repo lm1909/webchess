@@ -7,6 +7,7 @@ import Data.Array
 import Control.Lens
 import Data.Foldable
 
+data AIDiff = Random | Easy deriving (Show, Read, Eq, Enum)
 
 optimisationDirection :: Color -> Int
 optimisationDirection Black = -1
@@ -32,8 +33,9 @@ maxtuple (_, i) (_, j) = compare i j
 minmaxRankings :: ChessData -> [(Move, Int)]
 minmaxRankings cd =  (fmap (\m -> (m, (minmax' 2 (cd^.playerOnTurn)) $ setMove m cd)) (allMovesForPlayer (_playerOnTurn cd) cd))
 
-bestMove :: ChessData -> Move
-bestMove cd = fst $ maximumBy maxtuple (minmaxRankings cd)
+-- this is a stable function
+bestMove :: AIDiff -> ChessData -> Move
+bestMove _ cd = fst $ maximumBy maxtuple (minmaxRankings cd)
 
 movePair :: ChessData -> (Move, Int)
 movePair cd = maximumBy maxtuple (minmaxRankings cd)
