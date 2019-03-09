@@ -26,5 +26,6 @@ Game
 AiGame
     player UserId
     history Text
+    diff AIDiff
     gameStatus GameStatus
     deriving Show

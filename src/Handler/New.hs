@@ -50,6 +50,7 @@ postNewAiR = do ((result, aiwidget), enctype) <- runFormPost aiGameForm
                 case result of
                     FormSuccess aigame -> do (id, user) <- requireAuthPair
                                              aigameid <- runDB $ insert AiGame {aiGamePlayer = id,
+                                                                                aiGameDiff = difficulty aigame,
                                                                                 aiGameGameStatus = Running,
                                                                                 aiGameHistory = historyToText [] }
                                              redirect (AiGameR aigameid)

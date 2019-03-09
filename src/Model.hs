@@ -14,6 +14,7 @@ import ClassyPrelude.Yesod
 import Database.Persist.Quasi
 import Logic.ChessDBConnector
 import Logic.ChessData
+import Logic.Ai
 
 
 

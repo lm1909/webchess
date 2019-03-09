@@ -48,7 +48,7 @@ postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken move
                                                                                                                      update aiGameId [AiGameGameStatus =. (_status cd')]
                                                                                                           runInnerHandler <- handlerToIO
                                                                                                           liftIO $ forkIO $ runInnerHandler $ do
-                                                                                                                    let cd'' = setMove (bestMove Easy cd') cd' -- AI calculates & does its move
+                                                                                                                    let cd'' = setMove (bestMove (aiGameDiff aigame) cd') cd' -- AI calculates & does its move
                                                                                                                     runDB $ do update aiGameId [AiGameGameStatus =. (_status cd'')]
                                                                                                                                update aiGameId [AiGameHistory =. (historyToText $ (_history cd''))]
                                                                                                                     redirect (AiGameR aiGameId)
