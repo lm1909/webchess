@@ -6,47 +6,116 @@ import Logic.ChessLegal
 import Data.Array
 import Control.Lens
 import Data.Foldable
+import Data.Tree
+
+import Data.STRef
+import Control.Monad.ST
+import Control.Monad.State.Lazy
 
 data AIDiff = Random | Easy deriving (Show, Read, Eq, Enum, Bounded)
+
+-- this is a stable function
+bestMove :: AIDiff -> ChessData -> Move
+bestMove Easy cd = fst $ maximumBy maxtuple (minmaxRankings cd)
+bestMove Random cd = undefined -- @TODO
+
+
+
+
+ 
+testDraw = drawTree $ fmap (show . gameEvaluate) ((recdepth 2) (gameTree newGame))
+
+alphabetaMax :: Int -> Int -> Int -> ChessData -> Int
+alphabetaMax _ _ 0 cd = gameEvaluate cd
+alphabetaMax a b n cd = runST $ do n <- newSTRef 0
+                                   readSTRef n
+                        
+
+gameTree :: ChessData -> Tree ChessData
+gameTree cd = Node cd (fmap gameTree (allStates cd))
+    where allStates cd = fmap (\m -> setMove m cd) (allMovesForPlayer (cd^.playerOnTurn) cd)
+
+recdepth :: Int -> Tree a -> Tree a
+recdepth 0 (Node l _) = Node l []
+recdepth n (Node l children) = Node l (fmap (recdepth (n-1)) children)
+
+-- mmMax :: Tree Int -> Int
+-- mmMax (Node v []) = v
+-- mmMax (Node v children) = maximum (fmap mmMin children)
+
+-- mmMin :: Tree Int -> Int
+-- mmMin (Node v []) = v
+-- mmMin (Node v children) = minimum (fmap mmMax children)
+
+mmMax :: Tree Int -> Int
+mmMax = maximum . mmMax'
+mmMin :: Tree Int -> Int
+mmMin = minimum . mmMin'
+
+mapmin :: [[Int]] -> [Int]
+mapmin (l:ls) = (minimum l) : (omit (minimum l) ls)
+    where omit :: Int -> [[Int]] -> [Int]
+          omit _ [] = []
+          omit b (x:xs)
+                | minleq b x = omit b xs
+                | otherwise = ((minimum x) : omit (minimum x) xs)
+mapmin [] = undefined -- not possible, only called when children != []
+
+mmMax' :: Tree Int -> [Int]
+mmMax' (Node l []) = [l]
+mmMax' (Node l children) = mapmin (fmap mmMin' children)
+
+minleq :: Int -> [Int] -> Bool
+minleq _ [] = False
+minleq b (x:xs) = (x <= b) || (minleq b xs)
+
+
+mapmax :: [[Int]] -> [Int]
+mapmax (l:ls) = (maximum l) : (omit (maximum l) ls)
+        where omit :: Int -> [[Int]] -> [Int]
+              omit _ [] = []
+              omit b (l:ls)
+                | maxgeq b l = omit b ls
+                | otherwise = (maximum l) : (omit (maximum l) ls) 
+mapmax [] = undefined -- not possible, only called when children != []
+
+-- ^ sees if the maximum of the given list is greater or equal the given bound
+maxgeq :: Int -> [Int] -> Bool
+maxgeq _ [] = False
+maxgeq b (x:xs) = (x >= b) || (maxgeq b xs)
+
+
+
+mmMin' :: Tree Int -> [Int]
+mmMin' (Node v []) = [v]
+mmMin' (Node v children) = fmap maximum (fmap mmMax' children)
+
+
+-- sumST :: Num a => [a] -> a
+-- sumST xs = runST $ do           -- runST takes out stateful code and makes it pure again.
+
+--     n <- newSTRef 0             -- Create an STRef (place in memory to store values)
+
+--     forM_ xs $ \x -> do         -- For each element of xs ..
+--         modifySTRef n (+x)      -- add it to what we have in n.
+
+--     readSTRef n                 -- read the value of n, and return it.
+
+
 
 optimisationDirection :: Color -> Int
 optimisationDirection Black = -1
 optimisationDirection White = 1
 
--- negamax :: Int -> ChessData -> (Move, Int)
--- negamax n _
---     | n < 0 = error "Negamax: Cannot go below search depth of 0"
--- negamax 0 cd = maximumBy maxtuple $ fmap (\m -> (m, (optimisationDirection (cd^.playerOnTurn)) * (gameEvaluate (setMove m cd)))) (allMovesForPlayer (cd^.playerOnTurn) cd)
--- negamax n cd = maximumBy maxtuple $ fmap (opti . negamaxmapper) ((allMovesForPlayer (cd^.playerOnTurn)) cd)
---     where negamaxmapper = (\m -> negamax (n-1) (setMove m cd))
---           opti = \(c, i) -> (c, optimisationDirection (cd^.playerOnTurn)*i)
-
 maxtuple :: (a, Int) -> (a, Int) -> Ordering
 maxtuple (_, i) (_, j) = compare i j
-
--- minmax :: Int -> Color -> ChessData -> Int
--- minmax 0 c cd = (optimisationDirection col) * (gameEvaluate cd)
--- minmax n c cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
---                     [] -> (optimisationDirection c) * (optimisationDirection (cd^.playerOnTurn)) (-1000000000)
---                     mvs -> $ fmap (minmax (n-1)) mvs
 
 minmaxRankings :: ChessData -> [(Move, Int)]
 minmaxRankings cd =  (fmap (\m -> (m, (minmax' 2 (cd^.playerOnTurn)) $ setMove m cd)) (allMovesForPlayer (_playerOnTurn cd) cd))
 
--- this is a stable function
-bestMove :: AIDiff -> ChessData -> Move
-bestMove _ cd = fst $ maximumBy maxtuple (minmaxRankings cd)
 
 movePair :: ChessData -> (Move, Int)
 movePair cd = maximumBy maxtuple (minmaxRankings cd)
-
--- White is the player for maximisation
-minmax :: Int -> ChessData -> Int
-minmax 0 cd = (gameEvaluate cd)
-minmax n cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
-                    [] -> (optimisationDirection (cd^.playerOnTurn)) * (-1000000000)
-                    mvs -> (optifun (cd^.playerOnTurn)) $ fmap (\m -> minmax (n-1) (setMove m cd)) mvs
-    where optifun c = if c==White then maximum else minimum 
 
 minmax' :: Int -- ^ search depth
             -> Color -- ^ color of the player which is trying to optimize his move
