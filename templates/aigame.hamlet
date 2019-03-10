@@ -5,7 +5,10 @@
                 AI Match
             <h2> #{userNick player}
 
-^{renderGameStage moveauthorized cd movewidget enctype}
+<div .container>
+    
+    <div .row>
+    ^{renderGameStage moveauthorized cd movewidget enctype}
 
     <div .row>
         <h3> Advanced debug information

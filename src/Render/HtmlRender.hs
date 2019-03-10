@@ -3,21 +3,17 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Render.HtmlRender (renderGameStage, moveForm, MoveForm(MoveForm)) where
 
-
 import Import
-import Logic.ChessData
+
 import Data.Array
-import Data.Text as DT
 import Control.Lens
+import qualified Data.Text as DT
 
-
-renderChessContainer :: ChessData -> Widget
-renderChessContainer cd = toWidget [whamlet| <div .container id="chesscontainer">
-                                                 ^{renderBoard $ _board cd}
-                                                 ^{renderOffPieces $ _offPieces cd}|]
+import Logic.ChessData
 
 data MoveForm = MoveForm {ox :: Int, oy :: Int, dx :: Int, dy :: Int}
 
@@ -29,30 +25,36 @@ moveForm extra = do
     (dyRes, dyView) <- mreq intField "dyView" Nothing
     let moveRes = MoveForm <$> oxRes <*> oyRes <*> dxRes <*> dyRes
     let widget = do toWidget [whamlet| #{extra}
-                                       <div .container>
+                                       <div .container #controlcontainer>
                                            <div .row>
                                              <div .col-md-1>
                                                  <b>Move
-                                             <div .col .justify-content-end #coords>
-                                                 <div .justify-content-end> From (^{fvInput oxView}, ^{fvInput oyView}) to (^{fvInput dxView}, ^{fvInput dyView})
-                                           <button .button class="btn btn-primary btn-lg btn-block" id="movebutton">Move
+                                             <div .col .align-self-end #coords>From (^{fvInput oxView}, ^{fvInput oyView}) to (^{fvInput dxView}, ^{fvInput dyView})
+                                           <button .button .btn .btn-primary .btn-lg .btn-block #movebutton>Move
                              |]
-                    toWidget [lucius| #movebutton {
-                                        margin: 10px 0px 10px 0px;              
-                                      }
+                    toWidget [cassius| #movebutton
+                                            margin: 10px 0px 10px 0px;              
                              |]
+                    toWidget [cassius| #controlcontainer
+                                            padding: 10px;
+                             |] 
+                    toWidget [cassius| #coords
+                                            text-align: right;
+                                            padding-right: 25px;
+                             |] 
     return (moveRes, widget)
 
 renderSquare :: (Int, Int) -> Square -> Widget
 renderSquare (x, y) e = case e of 
                             None -> renderSquareHelper [shamlet||]
-                            (Ent col pc) -> renderSquareHelper $ do toWidget [hamlet|<img src=@{iconAccessor col pc} id="icon">|]
-                                                                    toWidget [lucius| #icon {
-                                                                                        width: 100%;
-                                                                                        height: 100%;} |]
+                            (Ent col pc) -> renderSquareHelper $ do toWidget [hamlet|<img src=@{iconAccessor col pc} #icon>|]
+                                                                    toWidget [cassius| #icon
+                                                                                           width: 100%;
+                                                                                           height: 100%;
+                                                                             |]
  where  renderSquareHelper :: Widget -> Widget
         renderSquareHelper inner = do idtag <- newIdent
-                                      let funstring = "visclick(" Prelude.++ show x Prelude.++ "," Prelude.++ show y Prelude.++ ")"
+                                      let funstring = "visclick(" ++ show x ++ "," ++ show y ++ ")"
                                       toWidget [whamlet| <div .border id=#{idtag} onclick="#{funstring}"> ^{inner}|]
                                       toWidget [lucius| ##{idtag} {
                                                            width: 100px;
@@ -94,41 +96,61 @@ iconAccessor White Rook = StaticR svg_whiterook_svg
 iconAccessor White Knight = StaticR svg_whiteknight_svg
 
 renderBoard :: Board -> Widget
-renderBoard arr = do toWidget [whamlet| <div id="chessboard">
-                                            <table id="chesstable">
+renderBoard arr = do toWidget [whamlet| <div #chessboard>
+                                            <table #chesstable>
                                                 $forall y <- ys
                                                     <tr>
                                                         $forall x <- xs
                                                             <td> ^{renderSquare (x, y) (arr ! (x, y))}                
                                 |]
+                     toWidget [cassius| #chesstable
+                                            margin: auto;
+                              |]
                     where xs = [1..8]
                           ys = [8, 7..1]
 
 renderOffPieces :: [(Piece, Color)] -> Widget
-renderOffPieces opcs = do toWidget [whamlet| <div id="offpieces">
+renderOffPieces opcs = do toWidget [whamlet| <div #offpieces>
                                                  <table>
                                                     <tr> 
                                                         $forall (wp, wc) <- whites
                                                             <td>
-                                                                <div id="piececontainer">
-                                                                    <img src=@{iconAccessor wc wp} id="icon" style="margin: auto">
+                                                                <div #piececontainer>
+                                                                    <img src=@{iconAccessor wc wp} #icon style="margin: auto">
                                                     <tr>
                                                         $forall (bp, bc) <- blacks
                                                             <td>
-                                                                <div id="piececontainer">
-                                                                    <img src=@{iconAccessor bc bp} id="icon" style="margin: auto">     |] 
-                          toWidget [lucius| #piececontainer {
-                                                 width: 100px;
-                                                 height: 100px;
-                                                 min-height: 100px;
-                                            }
+                                                                <div #piececontainer>
+                                                                    <img src=@{iconAccessor bc bp} #icon style="margin: auto">
+                                   |] 
+                          toWidget [cassius| #piececontainer
+                                                width: 100px;
+                                                height: 100px;
+                                                min-height: 100px;|]
+                          toWidget [cassius| #offpieces
+                                                margin: auto;
+                                                padding: 10px;
                                    |] -- @TODO dont hardcode the pixel size
-                         where whites = (Prelude.filter (\(_, c) -> (c == White)) opcs)
-                               blacks = (Prelude.filter (\(_, c) -> (c == Black)) opcs)
+                         where whites = (filter (\(_, c) -> (c == White)) opcs)
+                               blacks = (filter (\(_, c) -> (c == Black)) opcs)
+
+renderChessContainer :: ChessData -> Widget
+renderChessContainer cd = do toWidget [whamlet| <div .container #chesscontainer>
+                                                    <div #onturn>
+                                                        <h2 .centered #onturn> Player on turn is <b> #{show $ _playerOnTurn cd} </b>
+                                                    ^{renderBoard $ _board cd}
+                                                    ^{renderOffPieces $ _offPieces cd}|]
+                             toWidget [cassius| #onturn 
+                                                    text-align: center;
+                                      |]
+                             toWidget [cassius| #chesscontainer
+                                                    margin-left: auto;
+                                                    margin-right: auto;
+                                      |]
 
 renderGameStage :: Bool -> ChessData -> Widget -> Enctype -> Widget
 renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div .container>
-                                                                              <div .container id="exTab">
+                                                                              <div .container #exTab>
                                                                                   <ul .nav .nav-tabs>
                                                                                       <li .active>
                                                                                           <a href="#game" data-toggle="tab"> Game
@@ -136,7 +158,7 @@ renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div 
                                                                                           <a href="#history" data-toggle="tab"> History
                                                                                       
                                                                                   <div .tab-content>
-                                                                                      <div .tab-pane .active id="game">
+                                                                                      <div .tab-pane .active #game>
                                                                                           <div .row>
                                                                                               ^{renderChessContainer cd}
 
@@ -147,13 +169,20 @@ renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div 
                                                                                                           <form method=post action="#" enctype=#{enctype}>
                                                                                                               ^{moveformwidget}
                                                                                                   $of (Finished (Winner col))
-                                                                                                      <h1 id="winnotice" .text-center> Game finished! Winner: #{show col}
+                                                                                                      <h1 #winnotice .text-center> Game finished! Winner: #{show col}
                                                                                                       
-                                                                                      <div .tab-pane id="history">
+                                                                                      <div .tab-pane #history>
                                                                                           <h2> All moves in the game:
                                                                                           <ul .list-group>
                                                                                               $forall m <- _history cd
                                                                                                   <li .list-group-item>#{show m}
+                                                                 |]
+                                                        toWidget [cassius| #winnotice
+                                                                                margin: auto;
+                                                                 |]
+                                                        toWidget [cassius| #exTab
+                                                                                color: whiteM
+                                                                                padding: 2% 0px 2% 0px;
                                                                  |]
                                                         addScriptRemote "http://code.jquery.com/jquery-latest.js" -- this is necessary for the live update view js
                                                         $(widgetFile "autoload") 
