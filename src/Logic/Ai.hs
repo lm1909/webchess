@@ -4,104 +4,98 @@ import Logic.ChessData
 import Logic.ChessLegal
 
 import Data.Array
-import Control.Lens
 import Data.Foldable
 import Data.Tree
-
-import Data.STRef
-import Control.Monad.ST
-import Control.Monad.State.Lazy
-
-data AIDiff = Random | Easy deriving (Show, Read, Eq, Enum, Bounded)
+import Data.List
+import Control.Lens
+import Data.Ord
 
 -- this is a stable function
 bestMove :: AIDiff -> ChessData -> Move
 bestMove Easy cd = fst $ maximumBy maxtuple (minmaxRankings cd)
 bestMove Random cd = undefined -- @TODO
 
+--------------------------------------------------------
+-- Difficulty datatype
+--------------------------------------------------------
+
+data AIDiff = Random | Easy deriving (Show, Read, Eq, Enum, Bounded)
 
 
-
+--------------------------------------------------------
+-- Optimized alpha-beta-Search
+--------------------------------------------------------
  
-testDraw = drawTree $ fmap (show . gameEvaluate) ((recdepth 2) (gameTree newGame))
+testDraw = drawTree $ fmap (show . gameEvaluate) ((recdepth 2 (\_ -> False)) (gameTree newGame))
 
-alphabetaMax :: Int -> Int -> Int -> ChessData -> Int
-alphabetaMax _ _ 0 cd = gameEvaluate cd
-alphabetaMax a b n cd = runST $ do n <- newSTRef 0
-                                   readSTRef n
-                        
+-- parallel_DynPrun_AlphaBeta :: ChessData -> Move
+
+dynprunAlphaBeta :: Int -> Color -> ChessData -> Int
+dynprunAlphaBeta d col = alphabetaMax . orderhigher . fmap ((optimisationDirection col) * gameEvaluate). recdepth d dynamic . gameTree
+
+dynamic :: ChessData -> Bool
+dynamic _ = False -- @TODO 
 
 gameTree :: ChessData -> Tree ChessData
 gameTree cd = Node cd (fmap gameTree (allStates cd))
     where allStates cd = fmap (\m -> setMove m cd) (allMovesForPlayer (cd^.playerOnTurn) cd)
 
-recdepth :: Int -> Tree a -> Tree a
-recdepth 0 (Node l _) = Node l []
-recdepth n (Node l children) = Node l (fmap (recdepth (n-1)) children)
+recdepth :: Int -> (ChessData -> Bool) -> Tree ChessData -> Tree ChessData
+recdepth 0 d (Node cd children)
+    | d cd = Node cd (fmap (recdepth 0 d) children)
+    | otherwise = Node cd []
+recdepth n d (Node cd children) = Node cd (fmap (recdepth (n-1) d) children)
 
--- mmMax :: Tree Int -> Int
--- mmMax (Node v []) = v
--- mmMax (Node v children) = maximum (fmap mmMin children)
-
--- mmMin :: Tree Int -> Int
--- mmMin (Node v []) = v
--- mmMin (Node v children) = minimum (fmap mmMax children)
-
-mmMax :: Tree Int -> Int
-mmMax = maximum . mmMax'
-mmMin :: Tree Int -> Int
-mmMin = minimum . mmMin'
-
-mapmin :: [[Int]] -> [Int]
-mapmin (l:ls) = (minimum l) : (omit (minimum l) ls)
-    where omit :: Int -> [[Int]] -> [Int]
-          omit _ [] = []
-          omit b (x:xs)
-                | minleq b x = omit b xs
-                | otherwise = ((minimum x) : omit (minimum x) xs)
-mapmin [] = undefined -- not possible, only called when children != []
+alphabetaMax :: Tree Int -> Int
+alphabetaMax = maximum . mmMax'
+alphabetaMin :: Tree Int -> Int
+alphabetaMin = minimum . mmMin'
 
 mmMax' :: Tree Int -> [Int]
-mmMax' (Node l []) = [l]
-mmMax' (Node l children) = mapmin (fmap mmMin' children)
+mmMax' (Node v []) = [v]
+mmMax' (Node v children) = mapmin (fmap mmMin' children)
+    where mapmin :: [[Int]] -> [Int]
+          mapmin (l:ls) = (minimum l) : (alphacut (minimum l) ls)
+          -- note mapmin [] is not possible, as it is never called as that
 
-minleq :: Int -> [Int] -> Bool
-minleq _ [] = False
-minleq b (x:xs) = (x <= b) || (minleq b xs)
+          alphacut :: Int -> [[Int]] -> [Int]
+          alphacut _ [] = []
+          alphacut alpha (x:xs)
+                | minleq alpha x = alphacut alpha xs
+                | otherwise = ((minimum x) : alphacut (minimum x) xs)
 
-
-mapmax :: [[Int]] -> [Int]
-mapmax (l:ls) = (maximum l) : (omit (maximum l) ls)
-        where omit :: Int -> [[Int]] -> [Int]
-              omit _ [] = []
-              omit b (l:ls)
-                | maxgeq b l = omit b ls
-                | otherwise = (maximum l) : (omit (maximum l) ls) 
-mapmax [] = undefined -- not possible, only called when children != []
-
--- ^ sees if the maximum of the given list is greater or equal the given bound
-maxgeq :: Int -> [Int] -> Bool
-maxgeq _ [] = False
-maxgeq b (x:xs) = (x >= b) || (maxgeq b xs)
-
-
+          minleq :: Int -> [Int] -> Bool
+          minleq _ [] = False
+          minleq alpha (x:xs) = (x <= alpha) || (minleq alpha xs)
 
 mmMin' :: Tree Int -> [Int]
 mmMin' (Node v []) = [v]
-mmMin' (Node v children) = fmap maximum (fmap mmMax' children)
+mmMin' (Node v children) = mapmax (fmap mmMax' children)
+    where mapmax :: [[Int]] -> [Int]
+          mapmax (l:ls) = (maximum l) : (betacut (maximum l) ls)
+          -- note mapmax [] is not possible, as it is never called as that
+
+          betacut :: Int -> [[Int]] -> [Int]
+          betacut _ [] = []
+          betacut beta (l:ls)
+            | maxgeq beta l = betacut beta ls
+            | otherwise = (maximum l) : (betacut (maximum l) ls) 
+
+          -- ^ sees if the maximum of the given list is greater or equal the given bound
+          maxgeq :: Int -> [Int] -> Bool
+          maxgeq _ [] = False
+          maxgeq beta (x:xs) = (x >= beta) || (maxgeq beta xs)
 
 
--- sumST :: Num a => [a] -> a
--- sumST xs = runST $ do           -- runST takes out stateful code and makes it pure again.
+orderhigher :: Tree Int -> Tree Int
+orderhigher (Node v children) = Node v (sortBy (flip (comparing (\(Node v _) -> v))) (map orderlower children))
 
---     n <- newSTRef 0             -- Create an STRef (place in memory to store values)
+orderlower :: Tree Int -> Tree Int
+orderlower (Node v children) = Node v (sortBy (comparing (\(Node v _) -> v)) (map orderhigher children))
 
---     forM_ xs $ \x -> do         -- For each element of xs ..
---         modifySTRef n (+x)      -- add it to what we have in n.
-
---     readSTRef n                 -- read the value of n, and return it.
-
-
+--------------------------------------------------------
+-- Naive MiniMax implemenation
+--------------------------------------------------------
 
 optimisationDirection :: Color -> Int
 optimisationDirection Black = -1
@@ -126,6 +120,20 @@ minmax' n maxplayer cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
                             [] -> (optimisationDirection maxplayer) * (optimisationDirection (cd^.playerOnTurn)) * (-1000000000)
                             mvs -> (optifun (cd^.playerOnTurn)) $ fmap (\m -> minmax' (n-1) maxplayer (setMove m cd)) mvs
     where optifun c = if c==maxplayer then maximum else minimum 
+
+-- alternative approach with tree
+-- mmMax :: Tree Int -> Int
+-- mmMax (Node v []) = v
+-- mmMax (Node v children) = maximum (fmap mmMin children)
+
+-- mmMin :: Tree Int -> Int
+-- mmMin (Node v []) = v
+-- mmMin (Node v children) = minimum (fmap mmMax children)
+
+
+--------------------------------------------------------
+-- * Instantanious Evalutation functions
+--------------------------------------------------------
 
 -- the bigger the int, the better the situation for white
 -- stable
