@@ -13,13 +13,14 @@ import Data.Ord
 -- this is a stable function
 bestMove :: AIDiff -> ChessData -> Move
 bestMove Easy cd = fst $ maximumBy maxtuple (minmaxRankings cd)
+bestMove Medium cd = parallel_DynPrun_AlphaBeta cd
 bestMove Random cd = undefined -- @TODO
 
 --------------------------------------------------------
 -- Difficulty datatype
 --------------------------------------------------------
 
-data AIDiff = Random | Easy deriving (Show, Read, Eq, Enum, Bounded)
+data AIDiff = Random | Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
 
 
 --------------------------------------------------------
@@ -28,10 +29,11 @@ data AIDiff = Random | Easy deriving (Show, Read, Eq, Enum, Bounded)
  
 testDraw = drawTree $ fmap (show . gameEvaluate) ((recdepth 2 (\_ -> False)) (gameTree newGame))
 
--- parallel_DynPrun_AlphaBeta :: ChessData -> Move
+parallel_DynPrun_AlphaBeta :: ChessData -> Move
+parallel_DynPrun_AlphaBeta cd = snd $ maximumBy (comparing fst) $ fmap (\(cd, m) -> (dynprunAlphaBeta 2 (switchColor $ cd^.playerOnTurn) cd, m)) (fmap (\m -> (setMove m cd, m)) (allMovesForPlayer (cd^.playerOnTurn) cd))
 
 dynprunAlphaBeta :: Int -> Color -> ChessData -> Int
-dynprunAlphaBeta d col = alphabetaMax . orderhigher . fmap ((optimisationDirection col) * gameEvaluate). recdepth d dynamic . gameTree
+dynprunAlphaBeta d col = alphabetaMax . orderhigher . fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) . recdepth d dynamic . gameTree
 
 dynamic :: ChessData -> Bool
 dynamic _ = False -- @TODO 
