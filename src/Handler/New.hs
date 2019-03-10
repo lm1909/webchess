@@ -52,6 +52,7 @@ postNewAiR = do ((result, aiwidget), enctype) <- runFormPost aiGameForm
                                              aigameid <- runDB $ insert AiGame {aiGamePlayer = id,
                                                                                 aiGameDiff = difficulty aigame,
                                                                                 aiGameGameStatus = Running,
+                                                                                aiGameThinking = False,
                                                                                 aiGameHistory = historyToText [] }
                                              redirect (AiGameR aigameid)
                     _ -> redirect NewR

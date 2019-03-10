@@ -6,6 +6,9 @@
             <h2> #{userNick player}
 
 <div .container>
+
+    $if (aiGameThinking aigame)
+        ^{aiWaitSpinner}
     
     <div .row>
     ^{renderGameStage moveauthorized cd movewidget enctype}

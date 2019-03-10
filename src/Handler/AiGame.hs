@@ -46,12 +46,13 @@ postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken move
                                                                                      case makeMove move cd of 
                                                                                           Valid cd' -> do runDB $ do update aiGameId [AiGameHistory =. (historyToText $ (_history cd'))]
                                                                                                                      update aiGameId [AiGameGameStatus =. (_status cd')]
+                                                                                                                     update aiGameId [AiGameThinking =. True]
                                                                                                           runInnerHandler <- handlerToIO
-                                                                                                          liftIO $ forkIO $ runInnerHandler $ do
-                                                                                                                    let cd'' = setMove (bestMove (aiGameDiff aigame) cd') cd' -- AI calculates & does its move
-                                                                                                                    runDB $ do update aiGameId [AiGameGameStatus =. (_status cd'')]
-                                                                                                                               update aiGameId [AiGameHistory =. (historyToText $ (_history cd''))]
-                                                                                                                    redirect (AiGameR aiGameId)
+                                                                                                          _ <- liftIO $ forkIO $ runInnerHandler $ do
+                                                                                                              let cd'' = setMove (bestMove (aiGameDiff aigame) cd') cd' -- AI calculates & does its move
+                                                                                                              runDB $ do update aiGameId [AiGameGameStatus =. (_status cd'')]
+                                                                                                                         update aiGameId [AiGameHistory =. (historyToText $ (_history cd''))]
+                                                                                                                         update aiGameId [AiGameThinking =. False]
                                                                                                           redirect (AiGameR aiGameId)
                                                                                           Invalid r -> do setMessage $ toHtml ("Move invalid: " Prelude.++ show r)
                                                                                                           redirect (AiGameR aiGameId)
@@ -61,4 +62,55 @@ postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken move
                                                               redirect (AiGameR aiGameId)
                             False -> do setMessage $ toHtml ("Not authorized to make this move" :: Text)
                                         redirect (AiGameR aiGameId)
+
+aiWaitSpinner :: Widget
+aiWaitSpinner = do toWidget [whamlet|
+                                <div .row #waitbox>
+                                    <div .col-lg-2 .spinner>
+                                    <div .col-lg-8 #aithinkingtext>
+                                        <h3> AI is thinking..
+                            |]
+                   toWidget [cassius| #waitbox
+                                        margin: auto;
+                                        padding: 10px;
+                                        display: inline-flex;
+                            |]
+                   toWidget [cassius| #aithinkingtext
+                                        align-text: right;
+                            |]
+                   addScriptRemote "http://code.jquery.com/jquery-latest.js" -- this is necessary for the live update view js
+                   $(widgetFile "autoload-aistatus") 
+                   toWidget [lucius| .spinner {
+                                           /* Spinner size and color */
+                                           width: 5rem;
+                                           height: 5rem;
+                                           border-top-color: #6c757d;
+                                           border-left-color: #6c757d;
+
+                                           /* Additional spinner styles */
+                                           animation: spinner 1700ms linear infinite;
+                                           border-bottom-color: transparent;
+                                           border-right-color: transparent;
+                                           border-style: solid;
+                                           border-width: 2px;
+                                           border-radius: 50%;  
+                                           box-sizing: border-box;
+                                           display: inline-block;
+                                           vertical-align: middle;
+                                     }
+
+                                     /* Animation styles */
+                                     @keyframes spinner {
+                                       0% { transform: rotate(0deg); }
+                                       100% { transform: rotate(360deg); }
+                                     }
+                            |]
+            
+
+
+
+
+
+
+
 

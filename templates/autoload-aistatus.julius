@@ -1,0 +1,4 @@
+setInterval("updater();",5000); 
+function updater(){
+  $('#waitbox').load(location.href + " #waitbox");
+}
