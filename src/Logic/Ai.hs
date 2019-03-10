@@ -27,10 +27,10 @@ data AIDiff = Random | Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
 -- Optimized alpha-beta-Search
 --------------------------------------------------------
  
-testDraw = drawTree $ fmap (show . gameEvaluate) ((recdepth 2 (\_ -> False)) (gameTree newGame))
+testDraw = drawTree $ fmap (show . gameEvaluate) ((recdepth 4 (\_ -> False)) (gameTree newGame))
 
 parallel_DynPrun_AlphaBeta :: ChessData -> Move
-parallel_DynPrun_AlphaBeta cd = snd $ maximumBy (comparing fst) $ fmap (\(cd, m) -> (dynprunAlphaBeta 2 (switchColor $ cd^.playerOnTurn) cd, m)) (fmap (\m -> (setMove m cd, m)) (allMovesForPlayer (cd^.playerOnTurn) cd))
+parallel_DynPrun_AlphaBeta cd = snd $ maximumBy (comparing fst) $ fmap (\(cd, m) -> (dynprunAlphaBeta 3 (switchColor $ cd^.playerOnTurn) cd, m)) (fmap (\m -> (setMove m cd, m)) (allMovesForPlayer (cd^.playerOnTurn) cd))
 
 dynprunAlphaBeta :: Int -> Color -> ChessData -> Int
 dynprunAlphaBeta d col = alphabetaMax . orderhigher . fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) . recdepth d dynamic . gameTree
@@ -142,7 +142,7 @@ minmax' n maxplayer cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
 gameEvaluate :: ChessData -> Int
 gameEvaluate cd = sum [ evalSquare ((cd^.board) ! (x, y)) (x, y) | x <- [1..8], y <- [1..8]]
     where evalSquare None _ = 0
-          evalSquare (Ent col pc) p = (acc col p) (pieceSquareTable pc) + (if (col==White) then 1 else -1)*(pieceValue pc)
+          evalSquare (Ent col pc) p = (acc col p) (pieceSquareTable pc cd) + (if (col==White) then 1 else -1)*(pieceValue pc)
             where acc White (x, y) = (\a -> a !! ((x-1)+((y-1)*8)))
                   acc Black (x, y) = (\a -> -1*(a !! (((9-x)-1)+(((9-y)-1)*8)))   )
 
@@ -158,16 +158,16 @@ pieceValue King = 20000
 
 -- All tables taken from the excellent https://www.chessprogramming.org/Simplified_Evaluation_Function
 -- NOTE: tables are mirrored with respect to website
-pieceSquareTable :: Piece -> [Int]
-pieceSquareTable Pawn = [0,  0,  0,  0,  0,  0,  0,  0,
-                         5, 10, 10,-20,-20, 10, 10,  5,
-                         5, -5,-10,  0,  0,-10, -5,  5,
-                         0,  0,  0, 20, 20,  0,  0,  0,
-                         5,  5, 10, 25, 25, 10,  5,  5,
-                         10, 10, 20, 30, 30, 20, 10, 10,
-                         50, 50, 50, 50, 50, 50, 50, 50,
-                         0,  0,  0,  0,  0,  0,  0,  0]
-pieceSquareTable Knight = [-50,-40,-30,-30,-30,-30,-40,-50,
+pieceSquareTable :: Piece -> ChessData -> [Int]
+pieceSquareTable Pawn _ = [0,  0,  0,  0,  0,  0,  0,  0,
+                          5, 10, 10,-20,-20, 10, 10,  5,
+                          5, -5,-10,  0,  0,-10, -5,  5,
+                          0,  0,  0, 20, 20,  0,  0,  0,
+                          5,  5, 10, 25, 25, 10,  5,  5,
+                          10, 10, 20, 30, 30, 20, 10, 10,
+                          50, 50, 50, 50, 50, 50, 50, 50,
+                          0,  0,  0,  0,  0,  0,  0,  0]
+pieceSquareTable Knight _  = [-50,-40,-30,-30,-30,-30,-40,-50,
                            -40,-20,  0,  5,  5,  0,-20,-40,
                            -30,  5, 10, 15, 15, 10,  5,-30,
                            -30,  0, 15, 20, 20, 15,  0,-30,
@@ -175,7 +175,7 @@ pieceSquareTable Knight = [-50,-40,-30,-30,-30,-30,-40,-50,
                            -30,  0, 10, 15, 15, 10,  0,-30,
                            -40,-20,  0,  0,  0,  0,-20,-40,
                            -50,-40,-30,-30,-30,-30,-40,-50]
-pieceSquareTable Rook = [0,  0,  0,  0,  0,  0,  0,  0,
+pieceSquareTable Rook _ = [0,  0,  0,  0,  0,  0,  0,  0,
                          5, 10, 10, 10, 10, 10, 10,  5,
                         -5,  0,  0,  0,  0,  0,  0, -5,
                         -5,  0,  0,  0,  0,  0,  0, -5,
@@ -183,7 +183,7 @@ pieceSquareTable Rook = [0,  0,  0,  0,  0,  0,  0,  0,
                         -5,  0,  0,  0,  0,  0,  0, -5,
                         -5,  0,  0,  0,  0,  0,  0, -5,
                          0,  0,  0,  5,  5,  0,  0,  0]
-pieceSquareTable Bishop = [-20,-10,-10,-10,-10,-10,-10,-20,
+pieceSquareTable Bishop _ = [-20,-10,-10,-10,-10,-10,-10,-20,
                            -10,  5,  0,  0,  0,  0,  5,-10,
                            -10, 10, 10, 10, 10, 10, 10,-10,
                            -10,  0, 10, 10, 10, 10,  0,-10,
@@ -191,7 +191,7 @@ pieceSquareTable Bishop = [-20,-10,-10,-10,-10,-10,-10,-20,
                            -10,  0,  5, 10, 10,  5,  0,-10,
                            -10,  0,  0,  0,  0,  0,  0,-10,
                            -20,-10,-10,-10,-10,-10,-10,-20]
-pieceSquareTable Queen = [-20,-10,-10, -5, -5,-10,-10,-20,
+pieceSquareTable Queen _ = [-20,-10,-10, -5, -5,-10,-10,-20,
                           -10,  0,  0,  0,  0,  0,  0,-10,
                           -10,  0,  5,  5,  5,  5,  0,-10,
                             0,  0,  5,  5,  5,  5,  0, -5,
@@ -199,8 +199,9 @@ pieceSquareTable Queen = [-20,-10,-10, -5, -5,-10,-10,-20,
                           -10,  0,  5,  5,  5,  5,  5,-10,
                           -10,  0,  0,  0,  0,  5,  0,-10,
                           -20,-10,-10, -5, -5,-10,-10,-20]
--- this is the king in middle game
-pieceSquareTable King = [ 20, 30, 10,  0,  0, 10, 30, 20,
+pieceSquareTable King cd 
+          -- table for endgame
+          | endgame cd = [ 20, 30, 10,  0,  0, 10, 30, 20,
                           20, 20,  0,  0,  0,  0, 20, 20,
                          -10,-20,-20,-20,-20,-20,-20,-10,
                          -20,-30,-30,-40,-40,-30,-30,-20,
@@ -208,12 +209,15 @@ pieceSquareTable King = [ 20, 30, 10,  0,  0, 10, 30, 20,
                          -30,-40,-40,-50,-50,-40,-40,-30,
                          -30,-40,-40,-50,-50,-40,-40,-30,
                          -30,-40,-40,-50,-50,-40,-40,-30]
--- @TODO king endgame
--- [-50,-30,-30,-30,-30,-30,-30,-50
--- -30,-30,  0,  0,  0,  0,-30,-30,
--- -30,-10, 20, 30, 30, 20,-10,-30,
--- -30,-10, 30, 40, 40, 30,-10,-30,
--- -30,-10, 30, 40, 40, 30,-10,-30,
--- -30,-10, 20, 30, 30, 20,-10,-30,
--- -30,-20,-10,  0,  0,-10,-20,-30,
--- -50,-40,-30,-20,-20,-30,-40,-50]
+          -- table for middle game
+          | otherwise = [-50,-30,-30,-30,-30,-30,-30,-50
+                        -30,-30,  0,  0,  0,  0,-30,-30,
+                        -30,-10, 20, 30, 30, 20,-10,-30,
+                        -30,-10, 30, 40, 40, 30,-10,-30,
+                        -30,-10, 30, 40, 40, 30,-10,-30,
+                        -30,-10, 20, 30, 30, 20,-10,-30,
+                        -30,-20,-10,  0,  0,-10,-20,-30,
+                        -50,-40,-30,-20,-20,-30,-40,-50]
+
+endgame :: ChessData -> Bool
+endgame cd = ((Queen, Black) `elem` (cd^.offPieces) && (Queen, White) `elem` (cd^.offPieces))
