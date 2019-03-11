@@ -27,10 +27,15 @@ bestMove Random cd = undefined -- @TODO
 -- General
 --------------------------------------------------------
 
-
 gameTree :: ChessData -> Tree ChessData
 gameTree cd = Node cd (fmap gameTree (allStates cd))
     where allStates cd = fmap (\m -> setMove m cd) (allMovesForPlayer (cd^.playerOnTurn) cd)
+
+recdepth :: Int -> (ChessData -> Bool) -> Tree ChessData -> Tree ChessData
+recdepth 0 d (Node cd children)
+    | d cd = Node cd (fmap (recdepth 0 d) children)
+    | otherwise = Node cd []
+recdepth n d (Node cd children) = Node cd (fmap (recdepth (n-1) d) children)
 
 --------------------------------------------------------
 -- Optimized alpha-beta-Search
@@ -39,19 +44,19 @@ gameTree cd = Node cd (fmap gameTree (allStates cd))
 testDraw = drawTree $ fmap (show . gameEvaluate) ((recdepth 4 (\_ -> False)) (gameTree newGame))
 
 parallel_DynPrun_AlphaBeta :: ChessData -> Move
-parallel_DynPrun_AlphaBeta cd = snd $ maximumBy (comparing fst) $ fmap (\(cd, m) -> (dynprunAlphaBeta 3 (switchColor $ cd^.playerOnTurn) cd, m)) (fmap (\m -> (setMove m cd, m)) (allMovesForPlayer (cd^.playerOnTurn) cd))
+parallel_DynPrun_AlphaBeta cd = snd $ maximumBy (comparing fst) $ fmap (\(cd, m) -> (dynprunAlphaBeta 5 (switchColor $ cd^.playerOnTurn) cd, m)) (fmap (\m -> (setMove m cd, m)) (allMovesForPlayer (cd^.playerOnTurn) cd))
 
 dynprunAlphaBeta :: Int -> Color -> ChessData -> Int
-dynprunAlphaBeta d col = alphabetaMax . orderhigher . fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) . recdepth d dynamic . gameTree
+dynprunAlphaBeta d col = alphabetaMax . horizontalprune 2 . orderhigher . fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) . recdepth d quiescence . gameTree
 
-dynamic :: ChessData -> Bool
-dynamic _ = False -- @TODO
+horizonatlprune :: Int -> Tree Int -> Tree Int
+horizontalprune p (Node v children) = Node v (fmap takehalf (take ((length children) `quot` p) children))
 
-recdepth :: Int -> (ChessData -> Bool) -> Tree ChessData -> Tree ChessData
-recdepth 0 d (Node cd children)
-    | d cd = Node cd (fmap (recdepth 0 d) children)
-    | otherwise = Node cd []
-recdepth n d (Node cd children) = Node cd (fmap (recdepth (n-1) d) children)
+-- @TODO implement a quiescence search (this is quite a lot of work)
+-- see https://www.chessprogramming.org/CPW-Engine_quiescence
+quiescence :: ChessData -> Bool
+quiescence _ = False -- @TODO
+
 
 alphabetaMax :: Tree Int -> Int
 alphabetaMax = maximum . mmMax'
