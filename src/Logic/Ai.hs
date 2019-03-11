@@ -10,6 +10,13 @@ import           Data.List
 import           Data.Ord
 import           Data.Tree
 
+
+--------------------------------------------------------
+-- Interface
+--------------------------------------------------------
+
+data AIDiff = Random | Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
+
 -- this is a stable function
 bestMove :: AIDiff -> ChessData -> Move
 bestMove Easy cd   = fst $ maximumBy maxtuple (minmaxRankings cd)
@@ -17,18 +24,9 @@ bestMove Medium cd = parallel_DynPrun_AlphaBeta cd
 bestMove Random cd = undefined -- @TODO
 
 --------------------------------------------------------
--- Difficulty datatype
---------------------------------------------------------
-
-data AIDiff = Random | Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
-
---------------------------------------------------------
 -- General
 --------------------------------------------------------
 
-optimisationDirection :: Color -> Int
-optimisationDirection Black = -1
-optimisationDirection White = 1
 
 gameTree :: ChessData -> Tree ChessData
 gameTree cd = Node cd (fmap gameTree (allStates cd))
@@ -140,6 +138,10 @@ minmax' n maxplayer cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
 --------------------------------------------------------
 -- * Instantanious Evalutation functions
 --------------------------------------------------------
+
+optimisationDirection :: Color -> Int
+optimisationDirection Black = -1
+optimisationDirection White = 1
 
 -- the bigger the int, the better the situation for white
 -- stable
