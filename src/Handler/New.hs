@@ -1,17 +1,16 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude     #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Handler.New where
 
-import Import
-import Yesod
+import           Import
 
-import Logic.ChessDBConnector
-import Logic.ChessData
-import Logic.Ai
+import           Logic.Ai
+import           Logic.ChessData
+import           Logic.ChessDBConnector
 
 data HumanGameForm = HumanGameForm {opponent :: Text} deriving Show
 data AiGameForm = AiGameForm {difficulty :: AIDiff} deriving Show
@@ -26,30 +25,30 @@ aiGameForm = renderBootstrap $ AiGameForm
 
 getNewR :: Handler Html
 getNewR = do (humanwidget, humanenctype) <- generateFormPost humanGameForm
-             (aiwidget, aienctype) <- generateFormPost aiGameForm 
+             (aiwidget, aienctype) <- generateFormPost aiGameForm
              defaultLayout $ do setTitle "New Game"
                                 $(widgetFile "new")
 
 postNewHumanR :: Handler Html
-postNewHumanR = do ((result, humanwidget), enctype) <- runFormPost humanGameForm
+postNewHumanR = do ((result, humanwidget), _) <- runFormPost humanGameForm
                    case result of
-                       FormSuccess game -> do (id, user) <- requireAuthPair
+                       FormSuccess game -> do (authid, _) <- requireAuthPair
                                               opponent <- runDB $ getBy $ UniqueNick (opponent game)
-                                              case opponent of 
+                                              case opponent of
                                                    Nothing -> do setMessage $ toHtml ("Game creation failed: No such user exists" :: Text)
                                                                  redirect NewR
-                                                   (Just (Entity key val)) -> do gameid <- runDB $ insert Game {gamePlayer = id,
+                                                   (Just (Entity key _)) -> do gameid <- runDB $ insert Game {gamePlayer = authid,
                                                                                                                 gameOpponent = key,
                                                                                                                 gameGameStatus = Running,
                                                                                                                 gameHistory = historyToText [] }
-                                                                                 redirect (GameR gameid) 
+                                                                               redirect (GameR gameid)
                        _ -> redirect (NewR)
 
 postNewAiR :: Handler Html
-postNewAiR = do ((result, aiwidget), enctype) <- runFormPost aiGameForm
+postNewAiR = do ((result, aiwidget), _) <- runFormPost aiGameForm
                 case result of
-                    FormSuccess aigame -> do (id, user) <- requireAuthPair
-                                             aigameid <- runDB $ insert AiGame {aiGamePlayer = id,
+                    FormSuccess aigame -> do (authid, _) <- requireAuthPair
+                                             aigameid <- runDB $ insert AiGame {aiGamePlayer = authid,
                                                                                 aiGameDiff = difficulty aigame,
                                                                                 aiGameGameStatus = Running,
                                                                                 aiGameThinking = False,

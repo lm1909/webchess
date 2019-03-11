@@ -5,9 +5,9 @@ module Logic.ChessDBConnector where
 
 import Logic.ChessData
 import Logic.Ai
-import           qualified Data.Text as DT
-import Logic.ChessOutput
+
 import Database.Persist.TH
+import qualified Data.Text as DT
 
 -- make custom Entities usable in Persist
 derivePersistField "GameStatus"
@@ -24,7 +24,7 @@ historyToText ((Move n (ox, oy) (dx, dy)):ms) = showt n <> ":" <> showt ox <> ":
 textToHistory :: DT.Text -> [Move]
 textToHistory "" = []
 textToHistory t = concat $ fmap move (DT.splitOn "|" t)
-    where move t = wordToMove $ fmap (DT.unpack) (DT.splitOn ":" t)
+    where move text = wordToMove $ fmap (DT.unpack) (DT.splitOn ":" text)
           wordToMove :: [String] -> [Move]
           wordToMove (n:ox:oy:dx:dy:[]) = [Move (read n) ((read ox), (read oy)) ((read dx), (read dy))]
           wordToMove _ = []

@@ -27,5 +27,5 @@
         <pre>
             <code>
                  Complete entry #{show person}
-                 Id #{show id}
-                 User #{show user} 
+                 Id #{show authid}
+                 User #{show user}

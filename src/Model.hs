@@ -10,11 +10,12 @@
 
 module Model where
 
-import ClassyPrelude.Yesod
-import Database.Persist.Quasi
-import Logic.ChessDBConnector
-import Logic.ChessData
-import Logic.Ai
+import           Logic.Ai
+import           Logic.ChessData
+import           Logic.ChessDBConnector()
+
+import           ClassyPrelude.Yesod
+import           Database.Persist.Quasi
 
 
 
@@ -24,4 +25,3 @@ import Logic.Ai
 -- http://www.yesodweb.com/book/persistent/
 share [mkPersist sqlSettings, mkMigrate "migrateAll"]
     $(persistFileWith lowerCaseSettings "config/models")
-

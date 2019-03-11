@@ -1,19 +1,17 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NoImplicitPrelude     #-}
+{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Render.HtmlRender (renderGameStage, moveForm, MoveForm(MoveForm)) where
 
-import Import
+import           Data.Array
+import           Import
 
-import Data.Array
-import Control.Lens
-import qualified Data.Text as DT
-
-import Logic.ChessData
+import           Logic.ChessData
+import           Logic.ChessOutput
 
 data MoveForm = MoveForm {ox :: Int, oy :: Int, dx :: Int, dy :: Int}
 
@@ -33,19 +31,19 @@ moveForm extra = do
                                            <button .button .btn .btn-primary .btn-lg .btn-block #movebutton>Move
                              |]
                     toWidget [cassius| #movebutton
-                                            margin: 10px 0px 10px 0px;              
+                                            margin: 10px 0px 10px 0px;
                              |]
                     toWidget [cassius| #controlcontainer
                                             padding: 10px;
-                             |] 
+                             |]
                     toWidget [cassius| #coords
                                             text-align: right;
                                             padding-right: 25px;
-                             |] 
+                             |]
     return (moveRes, widget)
 
 renderSquare :: (Int, Int) -> Square -> Widget
-renderSquare (x, y) e = case e of 
+renderSquare (x, y) e = case e of
                             None -> renderSquareHelper [shamlet||]
                             (Ent col pc) -> renderSquareHelper $ do toWidget [hamlet|<img src=@{iconAccessor col pc} #icon>|]
                                                                     toWidget [cassius| #icon
@@ -60,7 +58,7 @@ renderSquare (x, y) e = case e of
                                                            width: 100px;
                                                            height: 100px;
                                                            min-height: 60px;
-                                                           background-color: #{color}; 
+                                                           background-color: #{color};
                                           }|] -- @TODO make the size of the board adaptable (eg dont hardcode 100px)
                                       toWidget [julius|
                                         var fst = true;
@@ -76,23 +74,23 @@ renderSquare (x, y) e = case e of
                                                 document.getElementById('hident5').value = y;
                                                 fst = true;
                                             }
-                                        } 
+                                        }
                                       |] -- @TODO hident is not stable, this is very ugly
                                        where color = if (((x+y) `mod` 2) == 1) then ("#f8f9fa" :: String) else ("#6c757d" :: String)
                                         -- colors taken from bootstrap standard palette
 
 iconAccessor :: Color -> Piece -> Route App
-iconAccessor Black King = StaticR svg_blackking_svg
-iconAccessor Black Queen = StaticR svg_blackqueen_svg
-iconAccessor Black Pawn = StaticR svg_blackpawn_svg
+iconAccessor Black King   = StaticR svg_blackking_svg
+iconAccessor Black Queen  = StaticR svg_blackqueen_svg
+iconAccessor Black Pawn   = StaticR svg_blackpawn_svg
 iconAccessor Black Bishop = StaticR svg_blackbishop_svg
-iconAccessor Black Rook = StaticR svg_blackrook_svg
+iconAccessor Black Rook   = StaticR svg_blackrook_svg
 iconAccessor Black Knight = StaticR svg_blackknight_svg
-iconAccessor White King = StaticR svg_whiteking_svg
-iconAccessor White Queen = StaticR svg_whitequeen_svg
-iconAccessor White Pawn = StaticR svg_whitepawn_svg
+iconAccessor White King   = StaticR svg_whiteking_svg
+iconAccessor White Queen  = StaticR svg_whitequeen_svg
+iconAccessor White Pawn   = StaticR svg_whitepawn_svg
 iconAccessor White Bishop = StaticR svg_whitebishop_svg
-iconAccessor White Rook = StaticR svg_whiterook_svg
+iconAccessor White Rook   = StaticR svg_whiterook_svg
 iconAccessor White Knight = StaticR svg_whiteknight_svg
 
 renderBoard :: Board -> Widget
@@ -101,7 +99,7 @@ renderBoard arr = do toWidget [whamlet| <div #chessboard>
                                                 $forall y <- ys
                                                     <tr>
                                                         $forall x <- xs
-                                                            <td> ^{renderSquare (x, y) (arr ! (x, y))}                
+                                                            <td> ^{renderSquare (x, y) (arr ! (x, y))}
                                 |]
                      toWidget [cassius| #chesstable
                                             margin: auto;
@@ -112,7 +110,7 @@ renderBoard arr = do toWidget [whamlet| <div #chessboard>
 renderOffPieces :: [(Piece, Color)] -> Widget
 renderOffPieces opcs = do toWidget [whamlet| <div #offpieces>
                                                  <table>
-                                                    <tr> 
+                                                    <tr>
                                                         $forall (wp, wc) <- whites
                                                             <td>
                                                                 <div #piececontainer>
@@ -122,7 +120,7 @@ renderOffPieces opcs = do toWidget [whamlet| <div #offpieces>
                                                             <td>
                                                                 <div #piececontainer>
                                                                     <img src=@{iconAccessor bc bp} #icon style="margin: auto">
-                                   |] 
+                                   |]
                           toWidget [cassius| #piececontainer
                                                 width: 100px;
                                                 height: 100px;
@@ -140,7 +138,7 @@ renderChessContainer cd = do toWidget [whamlet| <div .container #chesscontainer>
                                                         <h2 .centered #onturn> Player on turn is <b> #{show $ _playerOnTurn cd} </b>
                                                     ^{renderBoard $ _board cd}
                                                     ^{renderOffPieces $ _offPieces cd}|]
-                             toWidget [cassius| #onturn 
+                             toWidget [cassius| #onturn
                                                     text-align: center;
                                       |]
                              toWidget [cassius| #chesscontainer
@@ -156,7 +154,7 @@ renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div 
                                                                                           <a href="#game" data-toggle="tab"> Game
                                                                                       <li>
                                                                                           <a href="#history" data-toggle="tab"> History
-                                                                                      
+
                                                                                   <div .tab-content>
                                                                                       <div .tab-pane .active #game>
                                                                                           <div .row>
@@ -165,12 +163,12 @@ renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div 
                                                                                           <div .row>
                                                                                               $case (_status cd)
                                                                                                   $of (Running)
-                                                                                                      $if (moveauth) 
+                                                                                                      $if (moveauth)
                                                                                                           <form method=post action="#" enctype=#{enctype}>
                                                                                                               ^{moveformwidget}
                                                                                                   $of (Finished (Winner col))
                                                                                                       <h1 #winnotice .text-center> Game finished! Winner: #{show col}
-                                                                                                      
+
                                                                                       <div .tab-pane #history>
                                                                                           <h2> All moves in the game:
                                                                                           <ul .list-group>
@@ -185,4 +183,4 @@ renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div 
                                                                                 padding: 2% 0px 2% 0px;
                                                                  |]
                                                         addScriptRemote "http://code.jquery.com/jquery-latest.js" -- this is necessary for the live update view js
-                                                        $(widgetFile "autoload") 
+                                                        $(widgetFile "autoload")

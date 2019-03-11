@@ -2,4 +2,5 @@ setInterval("updater();",5000);
 function updater(){
   $('#chesscontainer').load(location.href + " #chesscontainer");
   $('#history').load(location.href + " #history");
+  $('#waitbox').load(location.href + " #waitbox");
 }

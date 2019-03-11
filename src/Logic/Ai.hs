@@ -1,18 +1,18 @@
 module Logic.Ai where
 
-import Logic.ChessData
-import Logic.ChessLegal
+import           Logic.ChessData
+import           Logic.ChessLegal
 
-import Data.Array
-import Data.Foldable
-import Data.Tree
-import Data.List
-import Control.Lens
-import Data.Ord
+import           Control.Lens
+import           Data.Array
+import           Data.Foldable
+import           Data.List
+import           Data.Ord
+import           Data.Tree
 
 -- this is a stable function
 bestMove :: AIDiff -> ChessData -> Move
-bestMove Easy cd = fst $ maximumBy maxtuple (minmaxRankings cd)
+bestMove Easy cd   = fst $ maximumBy maxtuple (minmaxRankings cd)
 bestMove Medium cd = parallel_DynPrun_AlphaBeta cd
 bestMove Random cd = undefined -- @TODO
 
@@ -22,11 +22,22 @@ bestMove Random cd = undefined -- @TODO
 
 data AIDiff = Random | Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
 
+--------------------------------------------------------
+-- General
+--------------------------------------------------------
+
+optimisationDirection :: Color -> Int
+optimisationDirection Black = -1
+optimisationDirection White = 1
+
+gameTree :: ChessData -> Tree ChessData
+gameTree cd = Node cd (fmap gameTree (allStates cd))
+    where allStates cd = fmap (\m -> setMove m cd) (allMovesForPlayer (cd^.playerOnTurn) cd)
 
 --------------------------------------------------------
 -- Optimized alpha-beta-Search
 --------------------------------------------------------
- 
+
 testDraw = drawTree $ fmap (show . gameEvaluate) ((recdepth 4 (\_ -> False)) (gameTree newGame))
 
 parallel_DynPrun_AlphaBeta :: ChessData -> Move
@@ -36,11 +47,7 @@ dynprunAlphaBeta :: Int -> Color -> ChessData -> Int
 dynprunAlphaBeta d col = alphabetaMax . orderhigher . fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) . recdepth d dynamic . gameTree
 
 dynamic :: ChessData -> Bool
-dynamic _ = False -- @TODO 
-
-gameTree :: ChessData -> Tree ChessData
-gameTree cd = Node cd (fmap gameTree (allStates cd))
-    where allStates cd = fmap (\m -> setMove m cd) (allMovesForPlayer (cd^.playerOnTurn) cd)
+dynamic _ = False -- @TODO
 
 recdepth :: Int -> (ChessData -> Bool) -> Tree ChessData -> Tree ChessData
 recdepth 0 d (Node cd children)
@@ -55,7 +62,7 @@ alphabetaMin = minimum . mmMin'
 
 mmMax' :: Tree Int -> [Int]
 mmMax' (Node v []) = [v]
-mmMax' (Node v children) = mapmin (fmap mmMin' children)
+mmMax' (Node _ children) = mapmin (fmap mmMin' children)
     where mapmin :: [[Int]] -> [Int]
           mapmin (l:ls) = (minimum l) : (alphacut (minimum l) ls)
           -- note mapmin [] is not possible, as it is never called as that
@@ -67,12 +74,12 @@ mmMax' (Node v children) = mapmin (fmap mmMin' children)
                 | otherwise = ((minimum x) : alphacut (minimum x) xs)
 
           minleq :: Int -> [Int] -> Bool
-          minleq _ [] = False
+          minleq _ []         = False
           minleq alpha (x:xs) = (x <= alpha) || (minleq alpha xs)
 
 mmMin' :: Tree Int -> [Int]
 mmMin' (Node v []) = [v]
-mmMin' (Node v children) = mapmax (fmap mmMax' children)
+mmMin' (Node _ children) = mapmax (fmap mmMax' children)
     where mapmax :: [[Int]] -> [Int]
           mapmax (l:ls) = (maximum l) : (betacut (maximum l) ls)
           -- note mapmax [] is not possible, as it is never called as that
@@ -81,11 +88,11 @@ mmMin' (Node v children) = mapmax (fmap mmMax' children)
           betacut _ [] = []
           betacut beta (l:ls)
             | maxgeq beta l = betacut beta ls
-            | otherwise = (maximum l) : (betacut (maximum l) ls) 
+            | otherwise = (maximum l) : (betacut (maximum l) ls)
 
           -- ^ sees if the maximum of the given list is greater or equal the given bound
           maxgeq :: Int -> [Int] -> Bool
-          maxgeq _ [] = False
+          maxgeq _ []        = False
           maxgeq beta (x:xs) = (x >= beta) || (maxgeq beta xs)
 
 
@@ -99,9 +106,6 @@ orderlower (Node v children) = Node v (sortBy (comparing (\(Node v _) -> v)) (ma
 -- Naive MiniMax implemenation
 --------------------------------------------------------
 
-optimisationDirection :: Color -> Int
-optimisationDirection Black = -1
-optimisationDirection White = 1
 
 maxtuple :: (a, Int) -> (a, Int) -> Ordering
 maxtuple (_, i) (_, j) = compare i j
@@ -121,7 +125,7 @@ minmax' 0 maxplayer cd = (optimisationDirection maxplayer) * (gameEvaluate cd)
 minmax' n maxplayer cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
                             [] -> (optimisationDirection maxplayer) * (optimisationDirection (cd^.playerOnTurn)) * (-1000000000)
                             mvs -> (optifun (cd^.playerOnTurn)) $ fmap (\m -> minmax' (n-1) maxplayer (setMove m cd)) mvs
-    where optifun c = if c==maxplayer then maximum else minimum 
+    where optifun c = if c==maxplayer then maximum else minimum
 
 -- alternative approach with tree
 -- mmMax :: Tree Int -> Int
@@ -149,12 +153,12 @@ gameEvaluate cd = sum [ evalSquare ((cd^.board) ! (x, y)) (x, y) | x <- [1..8], 
 -- gives value of a piece in centipawns
 -- taken from the excellent https://www.chessprogramming.org/Simplified_Evaluation_Function
 pieceValue :: Piece -> Int
-pieceValue Pawn = 100
+pieceValue Pawn   = 100
 pieceValue Knight = 320
 pieceValue Bishop = 330
-pieceValue Rook = 500
-pieceValue Queen = 900
-pieceValue King = 20000
+pieceValue Rook   = 500
+pieceValue Queen  = 900
+pieceValue King   = 20000
 
 -- All tables taken from the excellent https://www.chessprogramming.org/Simplified_Evaluation_Function
 -- NOTE: tables are mirrored with respect to website
@@ -199,7 +203,7 @@ pieceSquareTable Queen _ = [-20,-10,-10, -5, -5,-10,-10,-20,
                           -10,  0,  5,  5,  5,  5,  5,-10,
                           -10,  0,  0,  0,  0,  5,  0,-10,
                           -20,-10,-10, -5, -5,-10,-10,-20]
-pieceSquareTable King cd 
+pieceSquareTable King cd
           -- table for endgame
           | endgame cd = [ 20, 30, 10,  0,  0, 10, 30, 20,
                           20, 20,  0,  0,  0,  0, 20, 20,

@@ -1,12 +1,10 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Logic.ChessData where
 
 import           Control.Lens
-import           Control.Monad
 import           Data.Array
-import Database.Persist.TH
 
 
 data GameStatus = Running | Finished Result deriving (Show, Read, Eq)
@@ -18,7 +16,7 @@ switchColor :: Color -> Color
 switchColor White = Black
 switchColor Black = White
 
-data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving Eq 
+data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving Eq
 
 data Square = None | Ent Color Piece deriving Eq
 
@@ -112,11 +110,10 @@ getSquare c cd = (cd^.board) ! c
 getAllPositions :: ChessData -> Color -> [(Int, Int)]
 getAllPositions cd col = filter (\i -> corcol ((cd^.board) ! i)) [(x, y) | x <- [1..8], y <- [1..8]]
     where corcol = \e -> case e of (Ent boardcol _) -> boardcol == col
-                                   _ -> False
+                                   _                -> False
 
 -- @TODO make nicer
 getKingPosition :: ChessData -> Color -> (Int, Int)
 getKingPosition cd col = (filter (\i -> corking ((cd^.board) ! i)) [(x, y) | x <- [1..8], y <- [1..8]]) !! 0
     where corking = \e -> case e of (Ent c King) -> c == col
-                                    _ -> False
-
+                                    _            -> False

@@ -1,12 +1,12 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE NoImplicitPrelude     #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Handler.Profile where
 
-import Import
+import           Import
 
 data AccountData = AccountData {nick :: Text} deriving Show
 
@@ -16,8 +16,8 @@ accountForm maybename = renderBootstrap $ AccountData
 
 getProfileR :: Handler Html
 getProfileR = do
-    (id, user) <- requireAuthPair
-    person <- runDB $ get404 id
+    (authid, user) <- requireAuthPair
+    person <- runDB $ get404 authid
     (widget, enctype) <- generateFormPost (accountForm (Just $ userNick person))
     defaultLayout $ do
         setTitle "User page"
@@ -26,11 +26,11 @@ getProfileR = do
 postProfileR :: Handler Html
 postProfileR = do ((result, widget), enctype) <- runFormPost (accountForm Nothing)
 
-                  (id, user) <- requireAuthPair
-                  (person) <- runDB $ get id
+                  (authid, user) <- requireAuthPair
+                  (person) <- runDB $ get authid
 
                   case result of
-                    FormSuccess account -> do runDB $ update id [UserNick =. (nick account)] -- @TODO need to check here that username is unique
+                    FormSuccess account -> do runDB $ update authid [UserNick =. (nick account)] -- @TODO need to check here that username is unique
                                               setMessage $ toHtml ("Updated User nickname" :: Text)
                                               defaultLayout $ $(widgetFile "profile")
                     _ -> defaultLayout $ $(widgetFile "profile")

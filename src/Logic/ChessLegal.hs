@@ -5,7 +5,6 @@ module Logic.ChessLegal where
 import           Control.Lens
 import           Control.Monad
 import           Data.Array
-import           Logic.Util
 import           Logic.ChessData
 
 
@@ -32,8 +31,8 @@ legalCheckmate mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoPiec
 
 -- helper function, wraps legal to Bool
 legalWrapper :: (Move -> ChessData -> Legal ChessData) -> Move -> ChessData -> Bool
-legalWrapper lf mv cd = case (lf mv cd) of 
-                            Valid _ -> True
+legalWrapper lf mv cd = case (lf mv cd) of
+                            Valid _   -> True
                             Invalid _ -> False
 
 legalPlayer :: Move -> ChessData -> Legal ChessData
@@ -51,7 +50,7 @@ legalNoPiece :: Move -> ChessData -> Legal ChessData
 legalNoPiece (Move _ o _) cd = if ((cd^.board) ! o) == None then Invalid NoPiece else return cd
 
 legalTakeOwn :: Move -> ChessData -> Legal ChessData
-legalTakeOwn (Move _ _ d) cd = case ((cd^.board) ! d) of 
+legalTakeOwn (Move _ _ d) cd = case ((cd^.board) ! d) of
                                 None -> return cd
                                 (Ent col _) -> if (col == cd^.playerOnTurn) then Invalid TakeOwn else return cd
 
@@ -61,14 +60,14 @@ legalNoMove (Move _ o d) cd = if (o == d) then Invalid NoMove else return cd
 legalGameOver :: Move -> ChessData -> Legal ChessData
 legalGameOver _ cd = case (cd^.status) of
                         Running -> return cd
-                        _ -> Invalid GameOver
+                        _       -> Invalid GameOver
 
 legalMove :: Move -> ChessData -> Legal ChessData
 legalMove mv@(Move _ o _) cd = case ((cd^.board) ! o) of
                                 None -> return cd
-                                (Ent _ piece) -> case piece of 
+                                (Ent _ piece) -> case piece of
                                                      Rook -> legalRookMove mv cd
-                                                     Pawn -> legalPawnMove mv cd    
+                                                     Pawn -> legalPawnMove mv cd
                                                      Queen -> legalQueenMove mv cd
                                                      King -> legalKingMove mv cd
                                                      Bishop -> legalBishopMove mv cd
@@ -94,7 +93,7 @@ legalKingMove (Move _ (ox, oy) d) cd = if (d `elem` [(ox+x, oy+y) | x <- [-1..1]
 
 legalKnightMove :: Move -> ChessData -> Legal ChessData
 legalKnightMove (Move _ (ox, oy) d) cd = if (d `elem` [(ox+x, oy+y) | x <- [-1, 1], y <- [-2, 2]] ++ [(ox+x, oy+y) | x <- [-2, 2], y <- [-1, 1]]) then return cd else Invalid KnightMove
-                                                     
+
 legalBishopMove :: Move -> ChessData -> Legal ChessData
 legalBishopMove (Move _ o d) cd = if d `elem` explore o bishopOneWayExploreFunctions cd then return cd else Invalid BishopMove
 
@@ -141,7 +140,7 @@ allMovesForPlayer col cd = concat $ [allMovesFromPos p cd' | p <- getAllPosition
 checkMate :: Color -> ChessData -> Bool
 checkMate col cd = check cd col && ((length $ allMovesForPlayer col cd) == 0)
 
-updateGameStatus :: ChessData -> ChessData  
+updateGameStatus :: ChessData -> ChessData
 updateGameStatus cd = if checkMate (cd^.playerOnTurn) cd then set status (Finished (Winner (switchColor (cd^.playerOnTurn)))) cd else set status (Running) cd
 
 setMove :: Move -> ChessData -> ChessData

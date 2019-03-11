@@ -1,23 +1,20 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Handler.Game where
 
-import Control.Applicative
-import Import
-import Logic.ChessData
-import Data.Array
-import Logic.ChessDBConnector
-import Logic.ChessLegal
-import Data.Text as DT
-import Text.Julius (RawJS (..))
-import Logic.Chess
-import Control.Lens
-import Render.HtmlRender
-import Logic.Ai
+import           Logic.Ai
+import           Logic.Chess
+import           Logic.ChessData
+import           Logic.ChessDBConnector
+import           Logic.ChessLegal
+import           Render.HtmlRender
+
+import           Control.Lens
+import           Import
 
 
 gameToChessData :: Game -> ChessData
@@ -25,13 +22,13 @@ gameToChessData game = gameFromMoves (textToHistory $ gameHistory game)
 
 getGameR :: GameId -> Handler Html
 getGameR gameId = do game <- runDB $ get404 gameId
-                     (id, user) <- requireAuthPair
+                     (authid, user) <- requireAuthPair
                      ((res, movewidget), enctype) <- runFormGet moveForm
                      let cd = gameToChessData game
                      (player, opponent) <- runDB $ do player <- get404 (gamePlayer game) -- @TODO is a 404 really optimal here?
                                                       opponent <- get404 (gameOpponent game)
                                                       return (player, opponent)
-                     let moveauthorized = (id == gamePlayer game) || (id == gameOpponent game)
+                     let moveauthorized = (authid == gamePlayer game) || (authid == gameOpponent game)
                      defaultLayout $ do setTitle "Game"
                                         $(widgetFile "game")
 
@@ -39,15 +36,15 @@ getGameR gameId = do game <- runDB $ get404 gameId
 postGameR :: GameId -> Handler Html
 postGameR gameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm -- @TODO enable cross site request forgery protection
                       game <- runDB $ get404 gameId
-                      (id, user) <- requireAuthPair
+                      (authid, _) <- requireAuthPair
                       (player, opponent) <- runDB $ do player <- get404 (gamePlayer game) -- @TODO is a 404 really optimal here?
                                                        opponent <- get404 (gameOpponent game)
                                                        return (player, opponent)
                       let cd = gameToChessData game
-                      case (((id == gamePlayer game) && (cd^.playerOnTurn == White)) || ((id == gameOpponent game) && (cd^.playerOnTurn == Black))) of
+                      case (((authid == gamePlayer game) && (cd^.playerOnTurn == White)) || ((authid == gameOpponent game) && (cd^.playerOnTurn == Black))) of
                         True -> case result of
-                                        FormSuccess (MoveForm ox oy dx dy) -> do let move = Move (1 + (Prelude.length $ _history $ cd)) (ox,oy) (dx,dy) 
-                                                                                 case makeMove move cd of 
+                                        FormSuccess (MoveForm ox oy dx dy) -> do let move = Move (1 + (Prelude.length $ _history $ cd)) (ox,oy) (dx,dy)
+                                                                                 case makeMove move cd of
                                                                                     Valid cd' -> do runDB $ do update gameId [GameHistory =. (historyToText $ (_history cd'))]
                                                                                                                update gameId [GameGameStatus =. (_status cd')]
                                                                                                     redirect (GameR gameId)
@@ -59,4 +56,3 @@ postGameR gameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm
                                                           redirect (GameR gameId)
                         False -> do setMessage $ toHtml ("Not authorized to make this move" :: Text)
                                     redirect (GameR gameId)
-
