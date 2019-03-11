@@ -4,3 +4,10 @@
     padding: 4% 4% 4% 4%;
 
 }
+
+#runningaigameslist {
+
+    margin: auto;
+    padding: 4% 4% 4% 4%;
+
+}

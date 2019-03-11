@@ -13,3 +13,12 @@
                 $of _
                     $forall g <- runninggames
                         <a href=@{GameR (keyIdGame g)} .list-group-item> #{showGame g}
+
+<div .container #runningaigameslist>
+        <ul .list-group>
+            $case runningaigames
+                $of []
+                    <h2> Currently no running AI games
+                $of _
+                    $forall g <- runningaigames
+                        <a href=@{AiGameR (keyIdAiGame g)} .list-group-item> #{showAiGame g}
