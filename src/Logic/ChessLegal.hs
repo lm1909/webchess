@@ -60,7 +60,8 @@ legalBounds :: Move -> ChessData -> Legal ChessData
 legalBounds (Move _ o d) cd = if (primitiveInBounds o cd && primitiveInBounds d cd) then Valid cd else Invalid Bounds
 
 primitiveInBounds :: (Int, Int) -> ChessData -> Bool
-primitiveInBounds (ox, oy) cd = let ((minx, miny), (maxx, maxy)) = bounds $ cd^.board in (ox >= minx && oy >= miny && ox <= maxx && oy <= maxy)
+primitiveInBounds (ox, oy) cd = (ox >= 1 && oy >= 1 && ox <= 8 && oy <= 8)
+-- hardcode of dimensions is not as elegant, but more efficient
 
 -- checks if a piece is at the origin
 legalNoPiece :: Move -> ChessData -> Legal ChessData
