@@ -15,13 +15,12 @@ import           Data.Tree
 -- Interface
 --------------------------------------------------------
 
-data AIDiff = Random | Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
+data AIDiff = Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
 
 -- this is a stable function
 bestMove :: AIDiff -> ChessData -> Move
 bestMove Easy cd   = fst $ maximumBy maxtuple (minmaxRankings cd)
 bestMove Medium cd = snd $ dynprunAlphaBeta 6 (cd^.playerOnTurn) cd
-bestMove Random cd = undefined -- @TODO is this really necessary, who wants to play against random?
 
 --------------------------------------------------------
 -- General
