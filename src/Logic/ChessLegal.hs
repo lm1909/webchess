@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Logic.ChessLegal (legal, setMove, allMovesForPlayer, check, checkMate, gameFromMoves, Legal(Valid, Invalid), Reason) where
+module Logic.ChessLegal (legal, setMove, allMovesForPlayer, allChessData, check, checkMate, gameFromMoves, Legal(Valid, Invalid), Reason) where
 
 import           Control.Lens
 import           Control.Monad
@@ -37,7 +37,7 @@ instance Monad Legal where
 -- | Checks if a move is legal
 -- stable
 legal :: Move -> ChessData -> Legal ChessData
-legal mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoPiece mv) >>= (legalTakeOwn mv) >>= (legalMove mv) >>= (legalKingDanger mv) >>= (legalGameOver mv)
+legal mv cd = (legalBounds mv cd) >>= (legalPlayer mv) >>= (legalNoMove mv) >>= (legalNoPiece mv) >>= (legalTakeOwn mv) >>= (legalMove mv) >>= (legalKingDanger mv) >>= (legalGameOver mv)
 
 -- this ruleset without the check control is needed for the legalKingDanger Rule (otherwise a cycle would ensue)
 legalCheckmate :: Move -> ChessData -> Legal ChessData
@@ -174,6 +174,9 @@ allMovesForPlayer :: Color -> ChessData -> [Move]
 allMovesForPlayer col cd = concat $ [allMovesFromPos p cd' | p <- getAllPositions cd' col]
     where cd' = set playerOnTurn col cd
 
+allChessData :: ChessData -> [ChessData] 
+allChessData cd = fmap (\m -> setMove m cd) (allMovesForPlayer (cd^.playerOnTurn) cd)
+
 --------------------------------------------------------
 -- * Check $ Checkmate
 --------------------------------------------------------
@@ -186,7 +189,6 @@ check cd col = or $ fmap check_bool $ (fmap (\p -> Move 0 p king) (getAllPositio
 
 checkMate :: Color -> ChessData -> Bool
 checkMate col cd = check cd col && ((length $ allMovesForPlayer col cd) == 0)
-
 
 --------------------------------------------------------
 -- * Update & construct ChessData
