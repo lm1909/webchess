@@ -14,7 +14,7 @@
                     ^{humanwidget}
                     <button .button class="btn btn-primary btn-lg btn-block">Start Game
                             
-            <div .tab-pane #ai>
+            <div .tab-pane id="ai">
                 <h3> Create a new AI match
                 <form method=post action=@{NewAiR} enctype=#{aienctype}>
                     ^{aiwidget}
