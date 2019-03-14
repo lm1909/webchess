@@ -38,9 +38,10 @@ postNewHumanR = do ((result, humanwidget), _) <- runFormPost humanGameForm
                                                    Nothing -> do setMessage $ toHtml ("Game creation failed: No such user exists" :: Text)
                                                                  redirect NewR
                                                    (Just (Entity key _)) -> do gameid <- runDB $ insert Game {gamePlayer = authid,
-                                                                                                                gameOpponent = key,
-                                                                                                                gameGameStatus = Running,
-                                                                                                                gameHistory = historyToText [] }
+                                                                                                              gameOpponent = key,
+                                                                                                              gameElocalcoutstanding = True,
+                                                                                                              gameGameStatus = Running,
+                                                                                                              gameHistory = historyToText [] }
                                                                                redirect (GameR gameid)
                        _ -> redirect (NewR)
 

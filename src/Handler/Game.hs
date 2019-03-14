@@ -11,6 +11,7 @@ import           Logic.Chess
 import           Logic.ChessData
 import           Logic.ChessDBConnector
 import           Logic.ChessLegal
+import           Logic.Elo
 import           Render.HtmlRender
 
 import           Control.Lens
@@ -47,7 +48,13 @@ postGameR gameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm
                                                                                  case makeMove move cd of
                                                                                     Valid cd' -> do runDB $ do update gameId [GameHistory =. (historyToText $ (_history cd'))]
                                                                                                                update gameId [GameGameStatus =. (_status cd')]
-                                                                                                    redirect (GameR gameId)
+                                                                                                    case (cd'^.status) of 
+                                                                                                        Running -> redirect (GameR gameId)
+                                                                                                        (Finished result) | (gameElocalcoutstanding game) -> do let (elowhite, eloblack) = eloUpdate result (userElo player) (userElo opponent) 
+                                                                                                                                                                runDB $ do update (gamePlayer game) [UserElo =. elowhite]
+                                                                                                                                                                           update (gameOpponent game) [UserElo =. eloblack]
+                                                                                                                                                                redirect (GameR gameId)
+                                                                                                                          | otherwise -> redirect (GameR gameId)
                                                                                     Invalid r -> do setMessage $ toHtml ("Move invalid: " Prelude.++ show r)
                                                                                                     redirect (GameR gameId)
                                         FormFailure f -> do setMessage $ toHtml ("Failure " Prelude.++ show f)
@@ -56,3 +63,5 @@ postGameR gameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm
                                                           redirect (GameR gameId)
                         False -> do setMessage $ toHtml ("Not authorized to make this move" :: Text)
                                     redirect (GameR gameId)
+
+
