@@ -27,15 +27,41 @@ bestMove Medium cd = snd $ dynprunAlphaBeta 6 (cd^.playerOnTurn) cd
 -- General
 --------------------------------------------------------
 
+-- | gameTree generates a tree of all possible moves in a chess game origining from the provided ChessData
+-- lazy evaluation is essential here, the tree structure is infinite
+gameTree :: ChessData -> Tree ChessData
+gameTree cd = Node cd (map gameTree (allChessData cd)) -- `using` parList rpar
+
+-- | verticalprune limits the game tree to a finite depth
+verticalprune :: Int -> Tree a -> Tree a
+verticalprune 0 (Node v _) = Node v []
+verticalprune n (Node v children) = Node v (fmap (verticalprune (n-1)) children)
+
+-- | horizontalprune allows for a possible eager optimization: only consider the best moves of some children
+-- NOTE: only act on ordered tree to not detriment move quality
+horizontalprune :: Int -> Tree a -> Tree a
+horizontalprune p (Node v children) = Node v (fmap (horizontalprune p) (take ((length children) `quot` p) children))
+
+-- GTree: used for alpha-beta to store associated move in Tree as computation optimally is as near at the root as possible
+
 type GTree a = Tree (a, Move)
 
+-- | very similar to gameTree; only additionaly saves the associated move ('second level' in the complete tree) for all subsequent possible states
 gamemoveTree :: ChessData -> GTree ChessData
 gamemoveTree cd = Node (cd, undefined) (fmap (\(cds, m) -> gamemoveTree' cds m) (allStates cd))
     where allStates cd = fmap (\m -> (setMove m cd, m)) (allMovesForPlayer (cd^.playerOnTurn) cd)
 
-gamemoveTree' :: ChessData -> Move -> GTree ChessData
-gamemoveTree' cd m = Node (cd, m) (fmap (\mov -> gamemoveTree' (setMove mov cd) m) (allMovesForPlayer (cd^.playerOnTurn) cd))
+          gamemoveTree' :: ChessData -> Move -> GTree ChessData
+          gamemoveTree' cd m = Node (cd, m) (fmap (\mov -> gamemoveTree' (setMove mov cd) m) (allMovesForPlayer (cd^.playerOnTurn) cd))
 
+-- | similar to verticalprune, additionaly supports a quieescence search by allowing for dynamical pruning
+dynverticalprune :: Int -> (ChessData -> Bool) -> GTree ChessData -> GTree ChessData
+dynverticalprune 0 d (Node (cd, m) children)
+    | d cd = Node (cd, m) (fmap (dynverticalprune 0 d) children)
+    | otherwise = Node (cd, m) []
+dynverticalprune n d (Node v children) = Node v (fmap (dynverticalprune (n-1) d) children)
+
+-- helper functions
 
 gminimum = minimumBy (comparing fst)
 gmaximum = maximumBy (comparing fst)
@@ -43,36 +69,43 @@ gmaximum = maximumBy (comparing fst)
 gfmap :: (a -> b) -> (GTree a) -> (GTree b)
 gfmap f (Node (a, m) children) = Node (f a, m) (fmap (gfmap f) children)
 
-verticalprune :: Int -> Tree a -> Tree a
-verticalprune 0 (Node v _) = Node v []
-verticalprune n (Node v children) = Node v (fmap (verticalprune (n-1)) children)
+--------------------------------------------------------
+-- * Parallel tree based MinMax
+-- implements a simple min-max search (https://www.chessprogramming.org/Minimax)
+-- uses the parallel library for multi-core computation
+--------------------------------------------------------
 
-dynverticalprune :: Int -> (ChessData -> Bool) -> GTree ChessData -> GTree ChessData
-dynverticalprune 0 d (Node (cd, m) children)
-    | d cd = Node (cd, m) (fmap (dynverticalprune 0 d) children)
-    | otherwise = Node (cd, m) []
-dynverticalprune n d (Node v children) = Node v (fmap (dynverticalprune (n-1) d) children)
+-- | min-max-search optimal move accessor function
+-- NOTE: depth is one bigger than provided, as minmaxMax calculates mmSearch for all possible moves
+minmaxMax :: Int -> Color -> ChessData -> Move
+minmaxMax d col cd = snd $ maximumBy (comparing fst) $ ((fmap (\m -> (mmSearch d col (setMove m cd), m)) (allMovesForPlayer (cd^.playerOnTurn) cd)) `using` parList rdeepseq)
 
--- NOTE: only act on ordered tree to not detriment move quality
-horizontalprune :: Int -> Tree a -> Tree a
-horizontalprune p (Node v children) = Node v (fmap (horizontalprune p) (take ((length children) `quot` p) children))
+-- | min-max-search (see: https://www.chessprogramming.org/Minimax)
+mmSearch :: Int -> Color -> ChessData -> Int
+mmSearch d col = mmMax . (\t -> (fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) t )) . verticalprune d . (gameTree) -- `using` parTraversable rpar
+
+mmMax :: Tree Int -> Int
+mmMax (Node v []) = v
+mmMax (Node v children) = maximum (fmap mmMin children)
+
+mmMin :: Tree Int -> Int
+mmMin (Node v []) = v
+mmMin (Node v children) = minimum (fmap mmMax children)
 
 --------------------------------------------------------
 -- Optimized alpha-beta-Search
+-- implements an optimized alpha-beta search (https://www.chessprogramming.org/Alpha-Beta)
+-- with quiescence search like vertical pruning, move ordering and horizontal pruning
 --------------------------------------------------------
 
+-- accessor function for a alpha-beta-pruning move optimizing search (https://www.chessprogramming.org/Alpha-Beta), includes quiescence, move odering, horizontal pruning
 dynprunAlphaBeta :: Int -> Color -> ChessData -> (Int, Move)
-dynprunAlphaBeta d col = (gmaximum . mmMax' . horizontalprune 2 . orderhigher . gfmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) . dynverticalprune d quiescence . gamemoveTree)
-
--- @TODO implement a quiescence search (this is quite a lot of work)
--- see https://www.chessprogramming.org/CPW-Engine_quiescence
-quiescence :: ChessData -> Bool
-quiescence _ = False -- @TODO
+dynprunAlphaBeta d col = (gmaximum . abMax . horizontalprune 2 . orderhigher . gfmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) . dynverticalprune d quiescence . gamemoveTree)
 
 
-mmMax' :: GTree Int -> [(Int, Move)]
-mmMax' (Node v []) = [v]
-mmMax' (Node _ children) = mapmin (fmap mmMin' children)
+abMax :: GTree Int -> [(Int, Move)]
+abMax (Node v []) = [v]
+abMax (Node _ children) = mapmin (fmap abMin children)
     where mapmin :: [[(Int, Move)]] -> [(Int, Move)]
           mapmin (l:ls) = (gminimum l) : (alphacut (fst $ gminimum l) ls)
           -- note mapmin [] is not possible, as it is never called as that
@@ -87,9 +120,9 @@ mmMax' (Node _ children) = mapmin (fmap mmMin' children)
           minleq _ []         = False
           minleq alpha ((x, _):xs) = (x <= alpha) || (minleq alpha xs)
 
-mmMin' :: GTree Int -> [(Int, Move)]
-mmMin' (Node v []) = [v]
-mmMin' (Node _ children) = mapmax (fmap mmMax' children)
+abMin :: GTree Int -> [(Int, Move)]
+abMin (Node v []) = [v]
+abMin (Node _ children) = mapmax (fmap abMax children)
     where mapmax :: [[(Int, Move)]] -> [(Int, Move)]
           mapmax (l:ls) = (gmaximum l) : (betacut (fst $ gmaximum l) ls)
           -- note mapmax [] is not possible, as it is never called as that
@@ -106,9 +139,14 @@ mmMin' (Node _ children) = mapmax (fmap mmMax' children)
           maxgeq beta ((x, _):xs) = (x >= beta) || (maxgeq beta xs)
 
 
+-- @TODO implement a quiescence search (this is quite a lot of work)
+-- see https://www.chessprogramming.org/CPW-Engine_quiescence
+quiescence :: ChessData -> Bool
+quiescence _ = False -- @TODO
+
+-- move ordering to increase efficiency of alpha-/beta- cuts
 orderhigher :: GTree Int -> GTree Int
 orderhigher (Node v children) = Node v (sortBy (flip (comparing (\(Node (i, _) _) -> i))) (map orderlower children))
-
 orderlower :: GTree Int -> GTree Int
 orderlower (Node v children) = Node v (sortBy (comparing (\(Node (i, _) _) -> i)) (map orderhigher children))
 
@@ -137,37 +175,19 @@ orderlower (Node v children) = Node v (sortBy (comparing (\(Node (i, _) _) -> i)
 --     where optifun c = if c==maxplayer then maximum else minimum
 
 
---------------------------------------------------------
--- * Parallel tree based MinMax
---------------------------------------------------------
 
-minmaxMax :: Int -> Color -> ChessData -> Move
-minmaxMax d col cd = snd $ maximumBy (comparing fst) $ ((fmap (\m -> (mmSearch d col (setMove m cd), m)) (allMovesForPlayer (cd^.playerOnTurn) cd)) `using` parList rdeepseq)
-
-gameTree :: ChessData -> Tree ChessData
-gameTree cd = Node cd (map gameTree (allChessData cd)) -- `using` parList rpar
-
-mmSearch :: Int -> Color -> ChessData -> Int
-mmSearch d col = mmMax . (\t -> (fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) t)) . verticalprune d . (gameTree)
-
-mmMax :: Tree Int -> Int
-mmMax (Node v []) = v
-mmMax (Node v children) = maximum (fmap mmMin children)
-
-mmMin :: Tree Int -> Int
-mmMin (Node v []) = v
-mmMin (Node v children) = minimum (fmap mmMax children)
 
 --------------------------------------------------------
 -- * Instantanious Evaluation functions
 --------------------------------------------------------
 
+-- | returns optimisation direction for the different player colors
 optimisationDirection :: Color -> Int
 optimisationDirection Black = -1
 optimisationDirection White = 1
 
--- the bigger the int, the better the situation for white
--- stable
+-- | instantanious board evaluation function (piece value & piece-square table analysis) for the player on turn
+-- positive is good for white; the bigger the better; score is symmetric for black
 gameEvaluate :: ChessData -> Int
 gameEvaluate cd = sum [ evalSquare ((cd^.board) ! (x, y)) (x, y) | x <- [1..8], y <- [1..8]]
     where evalSquare None _ = 0
@@ -175,7 +195,7 @@ gameEvaluate cd = sum [ evalSquare ((cd^.board) ! (x, y)) (x, y) | x <- [1..8], 
             where acc White (x, y) = (\a -> a !! ((x-1)+((y-1)*8)))
                   acc Black (x, y) = (\a -> -1*(a !! (((9-x)-1)+(((9-y)-1)*8)))   )
 
--- gives value of a piece in centipawns
+-- | gives value of a piece in centipawns
 -- taken from the excellent https://www.chessprogramming.org/Simplified_Evaluation_Function
 pieceValue :: Piece -> Int
 pieceValue Pawn   = 100
@@ -185,6 +205,7 @@ pieceValue Rook   = 500
 pieceValue Queen  = 900
 pieceValue King   = 20000
 
+-- | piece-square lookup tables for instatanous board eval; respects game phase
 -- All tables taken from the excellent https://www.chessprogramming.org/Simplified_Evaluation_Function
 -- NOTE: tables are mirrored with respect to website
 pieceSquareTable :: Piece -> ChessData -> [Int]
@@ -248,5 +269,6 @@ pieceSquareTable King cd
                         -30,-20,-10,  0,  0,-10,-20,-30,
                         -50,-40,-30,-20,-20,-30,-40,-50]
 
+-- | determines if game is in endgame phase
 endgame :: ChessData -> Bool
 endgame cd = ((Queen, Black) `elem` (cd^.offPieces) && (Queen, White) `elem` (cd^.offPieces))
