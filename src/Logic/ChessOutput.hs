@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Logic.ChessOutput where
     
@@ -8,26 +8,36 @@ import Control.Lens
 import           Data.Char
 import Prelude
 
-instance Show Piece where
-    show Pawn   = "P"
-    show Queen  = "Q"
-    show King   = "K"
-    show Rook   = "R"
-    show Bishop = "B"
-    show Knight = "K"
 
-instance Show Square where
-  show None          = "."
-  show (Ent Black p) = fmap toLower $ show p
-  show (Ent White p) = fmap toUpper $ show p
+class Display a where
+    display :: a -> String
 
-instance Show Move where
-    show mv = "Move #" ++ (show $ mv^.number) ++ ": " ++ (show $ mv^.orig) ++ ":" ++ (show $ mv^.dest)
+instance Display Piece where
+    display Pawn   = "P"
+    display Queen  = "Q"
+    display King   = "K"
+    display Rook   = "R"
+    display Bishop = "B"
+    display Knight = "K"
 
-instance Show ChessData where
-    show cd = "Game " ++ (show $ cd^.status) ++ ", on turn: " ++ (show $ cd^.playerOnTurn)
-              ++ "\n" ++ (showBoard $ cd^.board) ++ (concat $ fmap (\m -> (show m) ++ "\n") $ cd^.history) ++ (concat $ fmap (\(pc, col) -> (show col) ++ ": " ++ (show pc) ++ "\n") $ cd^.offPieces)
+instance Display Square where
+    display None          = "."
+    display (Ent Black p) = fmap toLower $ display p
+    display (Ent White p) = fmap toUpper $ display p
 
-showBoard :: Board -> String
-showBoard arr = unlines [ concat [show (arr ! (x, y)) | x <- [1..8]] | y <- [1..8]]
+instance Display Move where
+    display mv = "Move #" ++ (show $ mv^.number) ++ ": " ++ (show $ mv^.orig) ++ ":" ++ (show $ mv^.dest)
+
+instance Display (Array (Int, Int) Square) where
+    display arr = unlines [ concat [display (arr ! (x, y)) | x <- [1..8]] | y <- [1..8]]
+
+instance Display Color where
+    display White = "White"
+    display Black = "Black"
+
+instance Display GameStatus where
+    display = show
+
+instance Display ChessData where
+    display cd = "Game " ++ (display $ cd^.status) ++ ", on turn: " ++ (display $ cd^.playerOnTurn) ++ "\n" ++ (display $ cd^.board) ++ (concat $ fmap (\m -> ((display m) ++ "\n")) $ cd^.history) ++ (concat $ fmap (\(pc, col) -> (display col) ++ ": " ++ (display pc) ++ "\n") $ cd^.offPieces)
 

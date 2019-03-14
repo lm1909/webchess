@@ -173,7 +173,7 @@ renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div 
                                                                                           <h2> All moves in the game:
                                                                                           <ul .list-group>
                                                                                               $forall m <- _history cd
-                                                                                                  <li .list-group-item>#{show m}
+                                                                                                  <li .list-group-item>#{display m}
                                                                  |]
                                                         toWidget [cassius| #winnotice
                                                                                 margin: auto;

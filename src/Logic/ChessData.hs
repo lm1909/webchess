@@ -13,17 +13,17 @@ import           GHC.Generics (Generic)
 data GameStatus = Running | Finished Result deriving (Show, Read, Eq, Generic, NFData)
 
 data Result = Draw | Winner Color deriving (Show, Read, Eq, Generic, NFData)
-data Color = Black | White deriving (Eq, Read, Show, Generic, NFData)
+data Color = Black | White deriving (Show, Eq, Read, Generic, NFData)
 
 switchColor :: Color -> Color
 switchColor White = Black
 switchColor Black = White
 
-data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving (Eq, Generic, NFData)
+data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving (Show, Eq, Generic, NFData)
 
-data Square = None | Ent Color Piece deriving (Eq, Generic, NFData)
+data Square = None | Ent Color Piece deriving (Show, Eq, Generic, NFData)
 
-data Move = Move { _number :: Int, _orig :: (Int, Int), _dest :: (Int, Int)} deriving (Generic, NFData)
+data Move = Move { _number :: Int, _orig :: (Int, Int), _dest :: (Int, Int)} deriving (Show, Generic, NFData)
 makeLenses ''Move
 
 
@@ -35,7 +35,7 @@ data ChessData = ChessData {  _status       :: GameStatus,
                               _playerOnTurn :: Color,
                               _offPieces    :: [(Piece, Color)],
                               _history      :: [Move] --history, youngest move is first in list
-                           } deriving (Generic, NFData)
+                           } deriving (Show, Generic, NFData)
 makeLenses ''ChessData
 
 -- Mutable Data Type
