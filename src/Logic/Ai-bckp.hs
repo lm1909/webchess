@@ -3,7 +3,6 @@ module Logic.Ai where
 import           Logic.ChessData
 import           Logic.ChessLegal
 
-import           Control.Parallel.Strategies
 import           Control.Lens
 import           Data.Array
 import           Data.Foldable
@@ -16,139 +15,129 @@ import           Data.Tree
 -- Interface
 --------------------------------------------------------
 
-data AIDiff = Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
+data AIDiff = Random | Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
 
 -- this is a stable function
 bestMove :: AIDiff -> ChessData -> Move
-bestMove Easy cd   = minmaxMax 3 (cd^.playerOnTurn) cd
-bestMove Medium cd = snd $ dynprunAlphaBeta 6 (cd^.playerOnTurn) cd
+bestMove Easy cd   = fst $ maximumBy maxtuple (minmaxRankings cd)
+bestMove Medium cd = parallel_DynPrun_AlphaBeta cd
+bestMove Random cd = undefined -- @TODO
 
 --------------------------------------------------------
 -- General
 --------------------------------------------------------
 
-type GTree a = Tree (a, Move)
+gameTree :: ChessData -> Tree ChessData
+gameTree cd = Node cd (fmap gameTree (allStates cd))
+    where allStates cd = fmap (\m -> setMove m cd) (allMovesForPlayer (cd^.playerOnTurn) cd)
 
-gamemoveTree :: ChessData -> GTree ChessData
-gamemoveTree cd = Node (cd, undefined) (fmap (\(cds, m) -> gamemoveTree' cds m) (allStates cd))
-    where allStates cd = fmap (\m -> (setMove m cd, m)) (allMovesForPlayer (cd^.playerOnTurn) cd)
-
-gamemoveTree' :: ChessData -> Move -> GTree ChessData
-gamemoveTree' cd m = Node (cd, m) (fmap (\mov -> gamemoveTree' (setMove mov cd) m) (allMovesForPlayer (cd^.playerOnTurn) cd))
-
-
-gminimum = minimumBy (comparing fst)
-gmaximum = maximumBy (comparing fst)
-
-gfmap :: (a -> b) -> (GTree a) -> (GTree b)
-gfmap f (Node (a, m) children) = Node (f a, m) (fmap (gfmap f) children)
-
-verticalprune :: Int -> Tree a -> Tree a
-verticalprune 0 (Node v _) = Node v []
-verticalprune n (Node v children) = Node v (fmap (verticalprune (n-1)) children)
-
-dynverticalprune :: Int -> (ChessData -> Bool) -> GTree ChessData -> GTree ChessData
-dynverticalprune 0 d (Node (cd, m) children)
-    | d cd = Node (cd, m) (fmap (dynverticalprune 0 d) children)
-    | otherwise = Node (cd, m) []
-dynverticalprune n d (Node v children) = Node v (fmap (dynverticalprune (n-1) d) children)
-
--- NOTE: only act on ordered tree to not detriment move quality
-horizontalprune :: Int -> Tree a -> Tree a
-horizontalprune p (Node v children) = Node v (fmap (horizontalprune p) (take ((length children) `quot` p) children))
+recdepth :: Int -> (ChessData -> Bool) -> Tree ChessData -> Tree ChessData
+recdepth 0 d (Node cd children)
+    | d cd = Node cd (fmap (recdepth 0 d) children)
+    | otherwise = Node cd []
+recdepth n d (Node cd children) = Node cd (fmap (recdepth (n-1) d) children)
 
 --------------------------------------------------------
 -- Optimized alpha-beta-Search
 --------------------------------------------------------
 
-dynprunAlphaBeta :: Int -> Color -> ChessData -> (Int, Move)
-dynprunAlphaBeta d col = (gmaximum . mmMax' . horizontalprune 2 . orderhigher . gfmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) . dynverticalprune d quiescence . gamemoveTree)
+parallel_DynPrun_AlphaBeta :: ChessData -> Move
+parallel_DynPrun_AlphaBeta cd = snd $ maximumBy (comparing fst) $ fmap (\(cd, m) -> (dynprunAlphaBeta 5 (switchColor $ cd^.playerOnTurn) cd, m)) (fmap (\m -> (setMove m cd, m)) (allMovesForPlayer (cd^.playerOnTurn) cd))
+
+dynprunAlphaBeta :: Int -> Color -> ChessData -> Int
+dynprunAlphaBeta d col = alphabetaMax . horizontalprune 2 . orderhigher . fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) . recdepth d quiescence . gameTree
+
+-- NOTE: only act on ordered tree to not detriment move quality
+horizontalprune :: Int -> Tree a -> Tree a
+horizontalprune p (Node v children) = Node v (fmap (horizontalprune p) (take ((length children) `quot` p) children))
 
 -- @TODO implement a quiescence search (this is quite a lot of work)
 -- see https://www.chessprogramming.org/CPW-Engine_quiescence
 quiescence :: ChessData -> Bool
 quiescence _ = False -- @TODO
 
+alphabetaMax :: Tree Int -> Int
+alphabetaMax = maximum . mmMax'
+alphabetaMin :: Tree Int -> Int
+alphabetaMin = minimum . mmMin'
 
-mmMax' :: GTree Int -> [(Int, Move)]
+mmMax' :: Tree Int -> [Int]
 mmMax' (Node v []) = [v]
 mmMax' (Node _ children) = mapmin (fmap mmMin' children)
-    where mapmin :: [[(Int, Move)]] -> [(Int, Move)]
-          mapmin (l:ls) = (gminimum l) : (alphacut (fst $ gminimum l) ls)
+    where mapmin :: [[Int]] -> [Int]
+          mapmin (l:ls) = (minimum l) : (alphacut (minimum l) ls)
           -- note mapmin [] is not possible, as it is never called as that
 
-          alphacut :: Int -> [[(Int, Move)]] -> [(Int, Move)]
+          alphacut :: Int -> [[Int]] -> [Int]
           alphacut _ [] = []
           alphacut alpha (x:xs)
                 | minleq alpha x = alphacut alpha xs
-                | otherwise = ((gminimum x) : alphacut (fst $ gminimum x) xs)
+                | otherwise = ((minimum x) : alphacut (minimum x) xs)
 
-          minleq :: Int -> [(Int, Move)] -> Bool
+          minleq :: Int -> [Int] -> Bool
           minleq _ []         = False
-          minleq alpha ((x, _):xs) = (x <= alpha) || (minleq alpha xs)
+          minleq alpha (x:xs) = (x <= alpha) || (minleq alpha xs)
 
-mmMin' :: GTree Int -> [(Int, Move)]
+mmMin' :: Tree Int -> [Int]
 mmMin' (Node v []) = [v]
 mmMin' (Node _ children) = mapmax (fmap mmMax' children)
-    where mapmax :: [[(Int, Move)]] -> [(Int, Move)]
-          mapmax (l:ls) = (gmaximum l) : (betacut (fst $ gmaximum l) ls)
+    where mapmax :: [[Int]] -> [Int]
+          mapmax (l:ls) = (maximum l) : (betacut (maximum l) ls)
           -- note mapmax [] is not possible, as it is never called as that
 
-          betacut :: Int -> [[(Int, Move)]] -> [(Int, Move)]
+          betacut :: Int -> [[Int]] -> [Int]
           betacut _ [] = []
           betacut beta (l:ls)
             | maxgeq beta l = betacut beta ls
-            | otherwise = (gmaximum l) : (betacut (fst $ gmaximum l) ls)
+            | otherwise = (maximum l) : (betacut (maximum l) ls)
 
           -- ^ sees if the maximum of the given list is greater or equal the given bound
-          maxgeq :: Int -> [(Int, Move)] -> Bool
+          maxgeq :: Int -> [Int] -> Bool
           maxgeq _ []        = False
-          maxgeq beta ((x, _):xs) = (x >= beta) || (maxgeq beta xs)
+          maxgeq beta (x:xs) = (x >= beta) || (maxgeq beta xs)
 
 
-orderhigher :: GTree Int -> GTree Int
-orderhigher (Node v children) = Node v (sortBy (flip (comparing (\(Node (i, _) _) -> i))) (map orderlower children))
+orderhigher :: Tree Int -> Tree Int
+orderhigher (Node v children) = Node v (sortBy (flip (comparing (\(Node v _) -> v))) (map orderlower children))
 
-orderlower :: GTree Int -> GTree Int
-orderlower (Node v children) = Node v (sortBy (comparing (\(Node (i, _) _) -> i)) (map orderhigher children))
+orderlower :: Tree Int -> Tree Int
+orderlower (Node v children) = Node v (sortBy (comparing (\(Node v _) -> v)) (map orderhigher children))
 
 --------------------------------------------------------
 -- Naive MiniMax implemenation
 --------------------------------------------------------
 
--- maxtuple :: (a, Int) -> (a, Int) -> Ordering
--- maxtuple (_, i) (_, j) = compare i j
+maxtuple :: (a, Int) -> (a, Int) -> Ordering
+maxtuple (_, i) (_, j) = compare i j
 
--- minmaxRankings :: ChessData -> [(Move, Int)]
--- minmaxRankings cd =  (fmap (\m -> (m, (minmax' 2 (cd^.playerOnTurn)) $ setMove m cd)) (allMovesForPlayer (_playerOnTurn cd) cd))
+minmaxRankings :: ChessData -> [(Move, Int)]
+minmaxRankings cd =  (fmap (\m -> (m, (minmax' 2 (cd^.playerOnTurn)) $ setMove m cd)) (allMovesForPlayer (_playerOnTurn cd) cd))
 
 
--- movePair :: ChessData -> (Move, Int)
--- movePair cd = maximumBy maxtuple (minmaxRankings cd)
+movePair :: ChessData -> (Move, Int)
+movePair cd = maximumBy maxtuple (minmaxRankings cd)
 
--- minmax' :: Int -- ^ search depth
---             -> Color -- ^ color of the player which is trying to optimize his move
---             -> ChessData -- ^ chess situation
---             -> Int -- ^ index for how good the situation is
--- minmax' 0 maxplayer cd = (optimisationDirection maxplayer) * (gameEvaluate cd)
--- minmax' n maxplayer cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
---                             [] -> (optimisationDirection maxplayer) * (optimisationDirection (cd^.playerOnTurn)) * (-1000000000)
---                             mvs -> (optifun (cd^.playerOnTurn)) $ fmap (\m -> minmax' (n-1) maxplayer (setMove m cd)) mvs
---     where optifun c = if c==maxplayer then maximum else minimum
+minmax' :: Int -- ^ search depth
+            -> Color -- ^ color of the player which is trying to optimize his move
+            -> ChessData -- ^ chess situation
+            -> Int -- ^ index for how good the situation is
+minmax' 0 maxplayer cd = (optimisationDirection maxplayer) * (gameEvaluate cd)
+minmax' n maxplayer cd = case (allMovesForPlayer (cd^.playerOnTurn) cd) of
+                            [] -> (optimisationDirection maxplayer) * (optimisationDirection (cd^.playerOnTurn)) * (-1000000000)
+                            mvs -> (optifun (cd^.playerOnTurn)) $ fmap (\m -> minmax' (n-1) maxplayer (setMove m cd)) mvs
+    where optifun c = if c==maxplayer then maximum else minimum
 
 
 --------------------------------------------------------
--- * Parallel tree based MinMax
+-- * Parallel Tree based MinMax
 --------------------------------------------------------
 
-minmaxMax :: Int -> Color -> ChessData -> Move
-minmaxMax d col cd = snd $ maximumBy (comparing fst) $ ((fmap (\m -> (mmSearch d col (setMove m cd), m)) (allMovesForPlayer (cd^.playerOnTurn) cd)) `using` parList rdeepseq)
+minmax :: Color -> Int -> ChessData -> (Int, Move)
+minmax col d cd = fmap (\m -> (minmaxeval col d (setMove m cd), m)) (allMovesForPlayer (cd^.playerOnTurn) cd)
 
-gameTree :: ChessData -> Tree ChessData
-gameTree cd = Node cd (map gameTree (allChessData cd)) -- `using` parList rpar
+minmaxeval :: Color -> Int -> ChessData -> Int
+minmaxeval col d = mmMax . (fmap (\cd -> (optimisationDirection col) * gameEvaluate cd)) . recdepth d quiescence . gameTree
 
-mmSearch :: Int -> Color -> ChessData -> Int
-mmSearch d col = mmMax . (\t -> (fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) t)) . verticalprune d . (gameTree)
 
 mmMax :: Tree Int -> Int
 mmMax (Node v []) = v
@@ -159,7 +148,7 @@ mmMin (Node v []) = v
 mmMin (Node v children) = minimum (fmap mmMax children)
 
 --------------------------------------------------------
--- * Instantanious Evaluation functions
+-- * Instantanious Evalutation functions
 --------------------------------------------------------
 
 optimisationDirection :: Color -> Int
