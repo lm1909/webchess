@@ -1,26 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
 
 module Logic.ChessData where
 
 import           Control.Lens
 import           Data.Array
+import           Control.DeepSeq
+import           GHC.Generics (Generic)
 
 
-data GameStatus = Running | Finished Result deriving (Show, Read, Eq)
+data GameStatus = Running | Finished Result deriving (Show, Read, Eq, Generic, NFData)
 
-data Result = Draw | Winner Color deriving (Show, Read, Eq)
-data Color = Black | White deriving (Eq, Read, Show)
+data Result = Draw | Winner Color deriving (Show, Read, Eq, Generic, NFData)
+data Color = Black | White deriving (Eq, Read, Show, Generic, NFData)
 
 switchColor :: Color -> Color
 switchColor White = Black
 switchColor Black = White
 
-data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving Eq
+data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving (Eq, Generic, NFData)
 
-data Square = None | Ent Color Piece deriving Eq
+data Square = None | Ent Color Piece deriving (Eq, Generic, NFData)
 
-data Move = Move { _number :: Int, _orig :: (Int, Int), _dest :: (Int, Int)}
+data Move = Move { _number :: Int, _orig :: (Int, Int), _dest :: (Int, Int)} deriving (Generic, NFData)
 makeLenses ''Move
 
 
@@ -32,7 +35,7 @@ data ChessData = ChessData {  _status       :: GameStatus,
                               _playerOnTurn :: Color,
                               _offPieces    :: [(Piece, Color)],
                               _history      :: [Move] --history, youngest move is first in list
-                           }
+                           } deriving (Generic, NFData)
 makeLenses ''ChessData
 
 -- Mutable Data Type
