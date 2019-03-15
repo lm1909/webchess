@@ -178,7 +178,7 @@ allChessData :: ChessData -> [ChessData]
 allChessData cd = fmap (\m -> setMove m cd) (allMovesForPlayer (cd^.playerOnTurn) cd)
 
 --------------------------------------------------------
--- * Check $ Checkmate
+-- * Check & Checkmate
 --------------------------------------------------------
 
 check :: ChessData -> Color -> Bool

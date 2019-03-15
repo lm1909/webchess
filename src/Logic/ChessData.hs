@@ -2,6 +2,12 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
 
+{-|
+Module      : Logic.ChessData
+
+Contains all basic data structures necessary for the chess game
+-}
+
 module Logic.ChessData where
 
 import           Control.Lens
@@ -9,27 +15,34 @@ import           Data.Array
 import           Control.DeepSeq
 import           GHC.Generics (Generic)
 
+--------------------------------------------------------
+-- Data types
+--------------------------------------------------------
 
+-- | defines possible game stati; determines game interaction
 data GameStatus = Running | Finished Result deriving (Show, Read, Eq, Generic, NFData)
-
 data Result = Draw | Winner Color deriving (Show, Read, Eq, Generic, NFData)
+
+-- | Colors in chess game
 data Color = Black | White deriving (Show, Eq, Read, Generic, NFData)
 
 switchColor :: Color -> Color
 switchColor White = Black
 switchColor Black = White
 
+-- | defines type for board state information
+-- convention for index: (x, y); (1, 1) is left rook of white
+type Board = Array (Int, Int) Square
+data Square = None | Ent Color Piece deriving (Show, Eq, Generic, NFData)
 data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving (Show, Eq, Generic, NFData)
 
-data Square = None | Ent Color Piece deriving (Show, Eq, Generic, NFData)
-
-data Move = Move { _number :: Int, _orig :: (Int, Int), _dest :: (Int, Int)} deriving (Show, Generic, NFData)
+data Move = Move { _number :: Int, -- ^ number must be consistent with position in history
+                   _orig :: (Int, Int), _dest :: (Int, Int)} deriving (Show, Generic, NFData)
 makeLenses ''Move
 
 
--- Immutable Data Type
--- convention for index: (x, y); (1, 1) is left rook of white
-type Board = Array (Int, Int) Square
+-- | ChessData is the base data type for all Chess operations
+-- NOTE: a lot of the information seems unnecessary but is required by some chess rules (for example: history for en-passant capturing, offpieces after pawn promotion, status for succeeding)
 data ChessData = ChessData {  _status       :: GameStatus,
                               _board        :: Board,
                               _playerOnTurn :: Color,
@@ -38,14 +51,11 @@ data ChessData = ChessData {  _status       :: GameStatus,
                            } deriving (Show, Generic, NFData)
 makeLenses ''ChessData
 
--- Mutable Data Type
--- type BoardM s = STArray s (Int, Int) Square
--- data ChessDataM s = ChessDataM { status     :: STRef s GameStatus,
---                                board        :: BoardM s,
---                                playerOnTurn :: STRef s Color,
---                                offPieces    :: STRef s [(Piece, Color)],
---                                history      :: STRef s [Move]
---                              }
+--------------------------------------------------------
+-- ChessData initialization
+
+newGame :: ChessData
+newGame = ChessData Running initBoard White [] []
 
 initBoard :: Board
 initBoard = array ((1, 1), (8, 8)) completeBoard
@@ -68,47 +78,34 @@ firstLine c n = [((1, n), Ent c Rook),
 emptyLine :: Int -> [((Int, Int), Square)]
 emptyLine n = [((i, n), None) | i <- [1..8]]
 
-newGame :: ChessData
-newGame = ChessData Running initBoard White [] []
-
--- thawChessData :: ChessDataI -> ST s (ChessDataM s)
--- thawChessData cd = do status' <- newSTRef $ statusI cd
---                       board' <- thaw $ boardI cd
---                       playerOnTurn' <- newSTRef $ playerOnTurnI cd
---                       offPieces' <- newSTRef $ offPiecesI cd
---                       history' <- newSTRef $ historyI cd
---                       return $ ChessDataM status' board' playerOnTurn' offPieces' history'
---
--- freezeChessData :: ChessDataM s -> ST s ChessDataI
--- freezeChessData cd = do
---     status' <- readSTRef $ status cd
---     board' <- freeze $ board cd
---     playerOnTurn' <- readSTRef $ playerOnTurn cd
---     offPieces' <- readSTRef $ offPieces cd
---     history' <- readSTRef $ history cd
---     return (ChessDataI status' board' playerOnTurn' offPieces' history')
-
+--------------------------------------------------------
+-- Update helper functions
+--------------------------------------------------------
 
 addMoveToHistory :: Move -> ChessData -> ChessData
-addMoveToHistory mv = over ( history ) ((:) mv)
+addMoveToHistory mv = history%~((:) mv)
 
 updatePlayerOnTurn :: ChessData -> ChessData
-updatePlayerOnTurn = over playerOnTurn switchColor
+updatePlayerOnTurn = playerOnTurn%~switchColor
 
 updateMove :: Move -> ChessData -> ChessData
-updateMove (Move _ o d) = over board (\b -> b // [(o, None), (d, b ! o)])
+updateMove (Move _ o d) = board%~(\b -> b // [(o, None), (d, b ! o)])
 
 updateOffPieces :: Move -> ChessData -> ChessData
-updateOffPieces mv cd = set offPieces (addOffPieces mv cd) cd
+updateOffPieces mv cd = offPieces .~ (addOffPieces mv cd) $ cd
 
 addOffPieces :: Move -> ChessData -> [(Piece, Color)]
 addOffPieces (Move _ _ d) cd = case ((cd^.board) ! d) of
-                                        None -> view offPieces cd
+                                        None -> cd^.offPieces
                                         (Ent col piece) -> (piece, col) : (cd^.offPieces)
+
+
+--------------------------------------------------------
+-- Convinience & special getter functions
+--------------------------------------------------------
 
 getSquare :: (Int, Int) -> ChessData -> Square
 getSquare c cd = (cd^.board) ! c
-
 
 getAllPositions :: ChessData -> Color -> [(Int, Int)]
 getAllPositions cd col = filter (\i -> corcol ((cd^.board) ! i)) [(x, y) | x <- [1..8], y <- [1..8]]
