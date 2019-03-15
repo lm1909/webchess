@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 059ca1b8c1a3c8d02df16f97bdc33e3bba5f02f05591701f3f120a6a945ff307
+-- hash: b88e5ac0173753450f80d918daaa917527c5d8068ac35ff2a53e435a6c070967
 
 name:           webchess
 version:        0.0.0
@@ -40,6 +40,7 @@ library
       Logic.ChessDBConnector
       Logic.ChessLegal
       Logic.ChessOutput
+      Logic.Elo
       Logic.Util
       Model
       Render.HtmlRender
@@ -61,6 +62,7 @@ library
     , conduit >=1.0 && <2.0
     , containers
     , data-default
+    , deepseq
     , directory >=1.1 && <1.4
     , fast-logger >=2.2 && <2.5
     , file-embed
@@ -71,9 +73,11 @@ library
     , lens
     , monad-control >=0.3 && <1.1
     , monad-logger >=0.3 && <0.4
+    , parallel
     , persistent >=2.8 && <2.9
     , persistent-sqlite >=2.8 && <2.9
     , persistent-template >=2.5 && <2.9
+    , prettyprinter
     , safe
     , shakespeare >=2.0 && <2.1
     , template-haskell
@@ -105,7 +109,7 @@ executable webchess
       Paths_webchess
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N32
   build-depends:
       aeson >=0.6 && <1.4
     , array
@@ -118,6 +122,7 @@ executable webchess
     , conduit >=1.0 && <2.0
     , containers
     , data-default
+    , deepseq
     , directory >=1.1 && <1.4
     , fast-logger >=2.2 && <2.5
     , file-embed
@@ -128,9 +133,11 @@ executable webchess
     , lens
     , monad-control >=0.3 && <1.1
     , monad-logger >=0.3 && <0.4
+    , parallel
     , persistent >=2.8 && <2.9
     , persistent-sqlite >=2.8 && <2.9
     , persistent-template >=2.5 && <2.9
+    , prettyprinter
     , safe
     , shakespeare >=2.0 && <2.1
     , template-haskell
@@ -152,7 +159,6 @@ executable webchess
   if flag(library-only)
     buildable: False
   default-language: Haskell2010
-  ghc-prof-options:    -auto-all -caf-all
 
 test-suite webchess-test
   type: exitcode-stdio-1.0
@@ -185,6 +191,7 @@ test-suite webchess-test
     , conduit >=1.0 && <2.0
     , containers
     , data-default
+    , deepseq
     , directory >=1.1 && <1.4
     , fast-logger >=2.2 && <2.5
     , file-embed
@@ -197,9 +204,11 @@ test-suite webchess-test
     , microlens
     , monad-control >=0.3 && <1.1
     , monad-logger >=0.3 && <0.4
+    , parallel
     , persistent >=2.8 && <2.9
     , persistent-sqlite >=2.8 && <2.9
     , persistent-template >=2.5 && <2.9
+    , prettyprinter
     , safe
     , shakespeare >=2.0 && <2.1
     , template-haskell
