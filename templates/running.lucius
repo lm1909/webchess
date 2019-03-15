@@ -8,14 +8,14 @@
 #runninggameslist {
 
     margin: auto;
-    padding: 4% 4% 4% 4%;
+    padding: 2% 4% 10px 4%;
 
 }
 
 #runningaigameslist {
 
     margin: auto;
-    padding: 4% 4% 4% 4%;
+    padding: 2% 4% 10px 4%;
 
 }
 

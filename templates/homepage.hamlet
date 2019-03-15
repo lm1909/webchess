@@ -7,19 +7,19 @@
 
 <div .container #cards>
     <div .row>
-        <div .col-lg-3 .card .stretched-link style="width: 16rem;">
+        <div .col-lg-4 .card .stretched-link style="width: 16rem;">
           <img .card-img-top src=@{StaticR svg_whiteknight_svg} alt="" #newcardimg>
           <div .card-body>
             <h4 .card-title>New
             <p .card-text>Start a new game of classic chess with any user on webchess.
             <a href=@{NewR} .btn .btn-primary>Create Game
-        <div .col-lg-3 .card .stretched-link style="width: 16rem;">
+        <div .col-lg-4 .card .stretched-link style="width: 16rem;">
           <img .card-img-top src=@{StaticR svg_list_svg} alt="" #runningcardimg>
           <div .card-body>
             <h4 .card-title>Running games
             <p .card-text>List all games that are currently active on webchess.
             <a href=@{RunningR} .btn .btn-primary>See games
-        <div .col-lg-3 .card .stretched-link style="width: 16rem;">
+        <div .col-lg-4 .card .stretched-link style="width: 16rem;">
           <img .card-img-top src=@{StaticR svg_star_svg} alt="" #rankingcardimg>
           <div .card-body>
             <h4 .card-title>Ranking list

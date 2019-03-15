@@ -5,8 +5,9 @@
                 AI Match
             <h2> #{userNick player}
 
-$maybe msg <- mmsg
-  <div .alert.alert-info #message>#{msg}
+<div .container>
+    $maybe msg <- mmsg
+      <div .alert.alert-info #message>#{msg}
 
 <div .container>
 
@@ -16,29 +17,36 @@ $maybe msg <- mmsg
     <div .row>
     ^{renderGameStage moveauthorized cd movewidget enctype}
 
-    <div .row>
-        <h3> Advanced debug information
-        <code> Game Evaluation (big good for white): #{show $ gameEvaluate cd}
-        <pre>
-            <code>In CHECK: #{show $ Logic.ChessLegal.check cd (_playerOnTurn cd)}
-            <code>CHECKMATE: White #{show $ checkMate White cd}  Black #{show $ checkMate Black cd}
-            <code> number of moves: White #{show $ (length $ allMovesForPlayer (White) cd)}
-                   Black #{show $ (length $ allMovesForPlayer (Black) cd)}
 
-        <pre>
-            <code> King Position: White #{show $ getKingPosition cd White} Black #{show $ getKingPosition cd Black}
-        <pre>
-            <code>
-                #{show $ allMovesForPlayer White cd}
-            <code>
-                #{show $ allMovesForPlayer Black cd}
-        <pre>
-            <code>
-                White #{show $ getAllPositions cd White}
-                Black #{show $ getAllPositions cd Black}
-        <pre>
-            <code>
-                #{show aigame}
-        <pre>
-            <code>
-                #{show cd}
+<div .container #advanceddebug>
+    <div #accordion .panel-group>
+        <div .panel .panel-default>
+            <div .panel-heading>
+                <h2 .panel-title>
+                    <a .btn data-toggle="collapse" data-parent="#accordion" href="#collapseOne"> Advanced debug information
+            <div #collapseOne .panel-collapse .collapse>
+                <div class="panel-body">
+                    <div .row>
+                        <code> Game Evaluation (big good for white): #{show $ gameEvaluate cd}
+                        <pre>
+                            <code>In CHECK: #{show $ Logic.ChessLegal.check cd (_playerOnTurn cd)}
+                            <code>CHECKMATE: White #{show $ checkMate White cd}  Black #{show $ checkMate Black cd}
+                            <code> number of moves: White #{show $ (length $ allMovesForPlayer (White) cd)}
+                                   Black #{show $ (length $ allMovesForPlayer (Black) cd)}
+                        <pre>
+                            <code> King Position: White #{show $ getKingPosition cd White} Black #{show $ getKingPosition cd Black}
+                        <pre>
+                            <code>
+                                #{show $ allMovesForPlayer White cd}
+                            <code>
+                                #{show $ allMovesForPlayer Black cd}
+                        <pre>
+                            <code>
+                                White #{show $ getAllPositions cd White}
+                                Black #{show $ getAllPositions cd Black}
+                        <pre>
+                            <code>
+                                #{show aigame}
+                        <pre>
+                            <code>
+                                #{show cd}

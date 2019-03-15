@@ -4,3 +4,9 @@
     max-height: 120px; 
 
 }
+
+#advanceddebug {
+    
+    padding-left: 25px;
+
+}

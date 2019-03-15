@@ -4,8 +4,9 @@
             <h1 .header>
                 My Profile
 
-$maybe msg <- mmsg
-  <div .alert.alert-info #message>#{msg}
+<div .container>
+    $maybe msg <- mmsg
+      <div .alert.alert-info #message>#{msg}
 
 <div .container>
     <div .row>
@@ -25,10 +26,17 @@ $maybe msg <- mmsg
             ^{widget}
             <button .button class="btn btn-primary btn-lg btn-block">Update account information
 
-    <div .row>
-        <h3> Advanced debug information
-        <pre>
-            <code>
-                 Complete entry #{show person}
-                 Id #{show authid}
-                 User #{show user}
+<div .container #advanceddebug>
+    <div #accordion .panel-group>
+        <div .panel .panel-default>
+            <div .panel-heading>
+                <h2 .panel-title>
+                    <a .btn data-toggle="collapse" data-parent="#accordion" href="#collapseOne"> Advanced debug information
+            <div #collapseOne .panel-collapse .collapse>
+                <div class="panel-body">
+                    <div .row>
+                        <pre>
+                            <code>
+                                 Complete entry #{show person}
+                                 Id #{show authid}
+                                 User #{show user}

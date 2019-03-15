@@ -14,9 +14,3 @@
             <tr>
                 <th> Elo
                 <th> #{userElo person}
-
-    <div .row>
-        <h3> Advanced debug information
-        <pre>
-            <code>
-                 Complete entry #{show person}
