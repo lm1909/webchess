@@ -5,16 +5,23 @@
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 
+{-|
+Module      : Render.HtmlRender
+
+HtmlRender contains all code related to rendering the chess game stage in html
+-}
 module Render.HtmlRender (renderGameStage, moveForm, MoveForm(MoveForm)) where
 
 import           Data.Array
 import           Import
 
+import           Control.Lens
 import           Logic.ChessData
 import           Logic.ChessOutput
 
 data MoveForm = MoveForm {ox :: Int, oy :: Int, dx :: Int, dy :: Int}
 
+-- | the monadic form used to enter move information
 moveForm :: Html -> MForm Handler (FormResult MoveForm, Widget)
 moveForm extra = do
     (oxRes, oxView) <- mreq intField "oxView" Nothing
@@ -42,6 +49,7 @@ moveForm extra = do
                              |]
     return (moveRes, widget)
 
+-- | renders a single square of a chessboard in html
 renderSquare :: (Int, Int) -> Square -> Widget
 renderSquare (x, y) e = case e of
                             None -> renderSquareHelper [shamlet||]
@@ -79,6 +87,7 @@ renderSquare (x, y) e = case e of
                                        where color = if (((x+y) `mod` 2) == 1) then ("#f8f9fa" :: String) else ("#6c757d" :: String)
                                         -- colors taken from bootstrap standard palette
 
+-- | convenience staticR icon accessor function
 iconAccessor :: Color -> Piece -> Route App
 iconAccessor Black King   = StaticR svg_blackking_svg
 iconAccessor Black Queen  = StaticR svg_blackqueen_svg
@@ -93,6 +102,7 @@ iconAccessor White Bishop = StaticR svg_whitebishop_svg
 iconAccessor White Rook   = StaticR svg_whiterook_svg
 iconAccessor White Knight = StaticR svg_whiteknight_svg
 
+-- | render entire chess board in html
 renderBoard :: Board -> Widget
 renderBoard arr = do toWidget [whamlet| <div #chessboard>
                                             <table #chesstable>
@@ -105,8 +115,9 @@ renderBoard arr = do toWidget [whamlet| <div #chessboard>
                                             margin: auto;
                               |]
                     where xs = [1..8]
-                          ys = [8, 7..1]
+                          ys = [8, 7..1] -- NOTE: watch orientation of chessboard
 
+-- | renders all off pieces (e.g. pieces that already were taken)
 renderOffPieces :: [(Piece, Color)] -> Widget
 renderOffPieces opcs = do toWidget [whamlet| <div #offpieces>
                                                  <table>
@@ -132,6 +143,7 @@ renderOffPieces opcs = do toWidget [whamlet| <div #offpieces>
                          where whites = (filter (\(_, c) -> (c == White)) opcs)
                                blacks = (filter (\(_, c) -> (c == Black)) opcs)
 
+-- | renders the entire chess container in html
 renderChessContainer :: ChessData -> Widget
 renderChessContainer cd = do toWidget [whamlet| <div .container #chesscontainer>
                                                     <div #onturn>
@@ -160,14 +172,19 @@ renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div 
                                                                                           <div .row>
                                                                                               ^{renderChessContainer cd}
 
-                                                                                          <div .row>
+                                                                                          <div .row #winnotice>
+                                                                                            $case (_status cd)
+                                                                                                $of (Finished (Winner col))
+                                                                                                    <h1 .text-center> Game finished! Winner: #{show col}
+                                                                                                $of _
+
+                                                                                          <div #interactionbox .row>
                                                                                               $case (_status cd)
                                                                                                   $of (Running)
                                                                                                       $if (moveauth)
                                                                                                           <form method=post action="#" enctype=#{enctype}>
                                                                                                               ^{moveformwidget}
-                                                                                                  $of (Finished (Winner col))
-                                                                                                      <h1 #winnotice .text-center> Game finished! Winner: #{show col}
+                                                                                                  $of _
 
                                                                                       <div .tab-pane #history>
                                                                                           <h2> All moves in the game:

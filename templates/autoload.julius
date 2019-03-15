@@ -3,4 +3,5 @@ function updater(){
   $('#chesscontainer').load(location.href + " #chesscontainer");
   $('#history').load(location.href + " #history");
   $('#waitbox').load(location.href + " #waitbox");
+  $('#winnotice').load(location.href + " #winnotice");
 }
