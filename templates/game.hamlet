@@ -5,6 +5,9 @@
                 Classic chess
             <h2> #{userNick player} vs #{userNick opponent}
 
+$maybe msg <- mmsg
+  <div .alert.alert-info #message>#{msg}
+
 ^{renderGameStage moveauthorized cd movewidget enctype}
 
     <div .row>

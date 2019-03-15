@@ -5,6 +5,9 @@
                 AI Match
             <h2> #{userNick player}
 
+$maybe msg <- mmsg
+  <div .alert.alert-info #message>#{msg}
+
 <div .container>
 
     $if (aiGameThinking aigame)

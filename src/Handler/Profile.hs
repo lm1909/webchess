@@ -22,6 +22,7 @@ accountForm maybename = renderBootstrap $ AccountData
 getProfileR :: Handler Html
 getProfileR = do
     (authid, user) <- requireAuthPair
+    mmsg <- getMessage
     person <- runDB $ get404 authid
     (widget, enctype) <- generateFormPost (accountForm (Just $ userNick person))
     defaultLayout $ do
@@ -30,6 +31,7 @@ getProfileR = do
 
 postProfileR :: Handler Html
 postProfileR = do ((result, widget), enctype) <- runFormPost (accountForm Nothing)
+                  mmsg <- getMessage
 
                   (authid, user) <- requireAuthPair
                   (person) <- runDB $ get authid

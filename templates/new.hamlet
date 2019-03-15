@@ -1,3 +1,5 @@
+$maybe msg <- mmsg
+  <div .alert.alert-info #message>#{msg}
 
 <div .container>
     <div .container id="exTab">

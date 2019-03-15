@@ -37,12 +37,14 @@ getGameR gameId = do game <- runDB $ get404 gameId
                                                       opponent <- get404 (gameOpponent game)
                                                       return (player, opponent)
                      let moveauthorized = (authid == gamePlayer game) || (authid == gameOpponent game)
+                     mmsg <- getMessage
                      defaultLayout $ do setTitle "Game"
                                         $(widgetFile "game")
 
 
 postGameR :: GameId -> Handler Html
 postGameR gameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm -- @TODO enable cross site request forgery protection
+                      mmsg <- getMessage
                       game <- runDB $ get404 gameId
                       (authid, _) <- requireAuthPair
                       (player, opponent) <- runDB $ do player <- get404 (gamePlayer game) -- @TODO is a 404 really optimal here?

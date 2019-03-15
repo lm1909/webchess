@@ -3,9 +3,10 @@
         <div .row>
             <h1 .header>
                 Ranking
-                <h3> Ranking of the 100 best chess players on webchess
+                <h2> Ranking of the 100 best chess players on webchess
 
 <div .container #rankinglist>
+    <div .row>
         <ul .list-group>
             $case besthundredplayers
                 $of []

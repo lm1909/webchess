@@ -1,3 +1,10 @@
+.masthead {
+
+    min-height: 0px;
+    padding-bottom: 7%;
+
+}
+
 #runninggameslist {
 
     margin: auto;
@@ -11,3 +18,10 @@
     padding: 4% 4% 4% 4%;
 
 }
+
+#listheading {
+
+    text-align: center;
+
+}
+

@@ -30,12 +30,14 @@ aiGameForm = renderBootstrap $ AiGameForm
 
 getNewR :: Handler Html
 getNewR = do (humanwidget, humanenctype) <- generateFormPost humanGameForm
+             mmsg <- getMessage
              (aiwidget, aienctype) <- generateFormPost aiGameForm
              defaultLayout $ do setTitle "New Game"
                                 $(widgetFile "new")
 
 postNewHumanR :: Handler Html
 postNewHumanR = do ((result, humanwidget), _) <- runFormPost humanGameForm
+                   mmsg <- getMessage
                    case result of
                        FormSuccess game -> do (authid, _) <- requireAuthPair
                                               opponent <- runDB $ getBy $ UniqueNick (opponent game)
@@ -52,6 +54,7 @@ postNewHumanR = do ((result, humanwidget), _) <- runFormPost humanGameForm
 
 postNewAiR :: Handler Html
 postNewAiR = do ((result, aiwidget), _) <- runFormPost aiGameForm
+                mmsg <- getMessage
                 case result of
                     FormSuccess aigame -> do (authid, _) <- requireAuthPair
                                              aigameid <- runDB $ insert AiGame {aiGamePlayer = authid,

@@ -14,6 +14,5 @@ module Handler.Home where
 import           Import
 
 getHomeR :: Handler Html
-getHomeR = defaultLayout $ do
-                setTitle "webchess - Home"
-                $(widgetFile "homepage")
+getHomeR = defaultLayout $ do setTitle "webchess - Home"
+                              $(widgetFile "homepage")

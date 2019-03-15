@@ -31,6 +31,7 @@ aiGameToChessData aigame = gameFromMoves (textToHistory $ aiGameHistory aigame)
 
 getAiGameR :: AiGameId -> Handler Html
 getAiGameR aiGameId = do aigame <- runDB $ get404 aiGameId
+                         mmsg <- getMessage
                          (authid, _) <- requireAuthPair
                          ((res, movewidget), enctype) <- runFormGet moveForm
                          let cd = aiGameToChessData aigame
@@ -41,6 +42,7 @@ getAiGameR aiGameId = do aigame <- runDB $ get404 aiGameId
 
 postAiGameR :: AiGameId -> Handler Html
 postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken moveForm -- @TODO enable cross site request forgery protection
+                          mmsg <- getMessage
                           aigame <- runDB $ get404 aiGameId
                           (authid, _) <- requireAuthPair
                           let cd = aiGameToChessData aigame
