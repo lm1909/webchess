@@ -194,8 +194,12 @@ checkMate col cd = check cd col && ((length $ allMovesForPlayer col cd) == 0)
 -- * Update & construct ChessData
 --------------------------------------------------------
 
+-- | sets the status to Winner / Draw / Running in case of checkmate / patt / normal situation
 updateGameStatus :: ChessData -> ChessData
-updateGameStatus cd = if checkMate (cd^.playerOnTurn) cd then set status (Finished (Winner (switchColor (cd^.playerOnTurn)))) cd else set status (Running) cd
+updateGameStatus cd 
+    | ((length (allMovesForPlayer (cd^.playerOnTurn) cd) == 0) && (check cd (cd^.playerOnTurn))) = status .~ (Finished $ Winner $ (switchColor (cd^.playerOnTurn))) $ cd
+    | (length (allMovesForPlayer (cd^.playerOnTurn) cd) == 0) && not (check cd (cd^.playerOnTurn)) = status .~ (Finished Draw) $ cd
+    | otherwise = status .~ (Running) $ cd
 
 setMove :: Move -> ChessData -> ChessData
 setMove mv cd = updateGameStatus <$> addMoveToHistory mv $ updateMove mv $ updateOffPieces mv $ updatePlayerOnTurn cd
