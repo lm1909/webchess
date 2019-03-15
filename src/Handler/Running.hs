@@ -4,6 +4,12 @@
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 
+{-|
+Module      : Handler.Running
+
+Handler to show list of all running games on webchess (mainly for spectator usecase)
+-}
+
 module Handler.Running where
 
 import           Import

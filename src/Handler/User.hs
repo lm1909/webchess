@@ -4,6 +4,12 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 
+{-|
+Module      : Handler.User
+
+Generic handler to serve user page
+-}
+
 module Handler.User where
 
 import Import

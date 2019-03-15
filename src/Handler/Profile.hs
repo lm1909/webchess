@@ -4,6 +4,11 @@
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 
+{-|
+Module      : Handler.Profile
+
+Handler to show profile of user and change information
+-}
 module Handler.Profile where
 
 import           Import
@@ -32,5 +37,6 @@ postProfileR = do ((result, widget), enctype) <- runFormPost (accountForm Nothin
                   case result of
                     FormSuccess account -> do runDB $ update authid [UserNick =. (nick account)] -- @TODO need to check here that username is unique
                                               setMessage $ toHtml ("Updated User nickname" :: Text)
-                                              defaultLayout $ $(widgetFile "profile")
-                    _ -> defaultLayout $ $(widgetFile "profile")
+                                              redirect ProfileR
+                    _ -> defaultLayout $ do setMessage $ toHtml ("Form input invalid" :: Text)
+                                            redirect ProfileR

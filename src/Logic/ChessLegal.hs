@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Logic.ChessLegal (legal, setMove, allMovesForPlayer, allChessData, check, checkMate, gameFromMoves, Legal(Valid, Invalid), Reason) where
+module Logic.ChessLegal (legal, setMove, allMovesForPlayer, allChessData, check, checkMate, gameFromMoves, Legal(Valid, Invalid), Reason(..)) where
 
 import           Control.Lens
 import           Control.Monad

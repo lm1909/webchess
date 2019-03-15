@@ -4,6 +4,11 @@
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 
+{-|
+Module      : Handler.New
+
+Handler to create new AI/human-human game
+-}
 module Handler.New where
 
 import           Import
@@ -43,7 +48,7 @@ postNewHumanR = do ((result, humanwidget), _) <- runFormPost humanGameForm
                                                                                                               gameGameStatus = Running,
                                                                                                               gameHistory = historyToText [] }
                                                                                redirect (GameR gameid)
-                       _ -> redirect (NewR)
+                       _ -> redirect NewR
 
 postNewAiR :: Handler Html
 postNewAiR = do ((result, aiwidget), _) <- runFormPost aiGameForm

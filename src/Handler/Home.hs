@@ -4,6 +4,11 @@
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 
+{-|
+Module      : Handler.Home
+
+Generic handler to serve homepage
+-}
 module Handler.Home where
 
 import           Import

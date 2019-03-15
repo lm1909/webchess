@@ -13,8 +13,8 @@
         <pre>
             <code>In CHECK: #{show $ Logic.ChessLegal.check cd (_playerOnTurn cd)}
             <code>CHECKMATE: White #{show $ checkMate White cd}  Black #{show $ checkMate Black cd}
-            <code> number of moves: White #{show $ (Prelude.length $ allMovesForPlayer (White) cd)}
-                   Black #{show $ (Prelude.length $ allMovesForPlayer (Black) cd)}
+            <code> number of moves: White #{show $ (length $ allMovesForPlayer (White) cd)}
+                   Black #{show $ (length $ allMovesForPlayer (Black) cd)}
 
         <pre>
             <code> King Position: White #{show $ getKingPosition cd White} Black #{show $ getKingPosition cd Black}

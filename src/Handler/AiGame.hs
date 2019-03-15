@@ -3,6 +3,13 @@
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE NoImplicitPrelude     #-}
+
+{-|
+Module      : Handler.AiGame
+
+The AiGame module contains the Handler for getting an AI game and describes the high level 'protocol' of an AI game
+-}
 
 module Handler.AiGame where
 
@@ -15,6 +22,7 @@ import           Logic.Chess
 import           Logic.ChessData
 import           Logic.ChessDBConnector
 import           Logic.ChessLegal
+import           Logic.ChessOutput
 import           Render.HtmlRender
 
 
@@ -38,27 +46,28 @@ postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken move
                           let cd = aiGameToChessData aigame
                           case (((authid == aiGamePlayer aigame) && (cd^.playerOnTurn == White))) of
                             True -> case result of
-                                            FormSuccess (MoveForm ox oy dx dy) -> do let move = Move (1 + (Prelude.length $ _history $ cd)) (ox,oy) (dx,dy)
+                                            FormSuccess (MoveForm ox oy dx dy) -> do let move = Move (1 + (length $ cd^.history)) (ox,oy) (dx,dy)
                                                                                      case makeMove move cd of
-                                                                                          Valid cd' -> do runDB $ do update aiGameId [AiGameHistory =. (historyToText $ (_history cd'))]
-                                                                                                                     update aiGameId [AiGameGameStatus =. (_status cd')]
+                                                                                          Valid cd' -> do runDB $ do update aiGameId [AiGameHistory =. (historyToText $ (cd'^.history))]
+                                                                                                                     update aiGameId [AiGameGameStatus =. (cd'^.status)]
                                                                                                                      update aiGameId [AiGameThinking =. True]
                                                                                                           runInnerHandler <- handlerToIO
                                                                                                           _ <- liftIO $ forkIO $ runInnerHandler $ do
                                                                                                               let cd'' = setMove (bestMove (aiGameDiff aigame) cd') cd' -- AI calculates & does its move
-                                                                                                              runDB $ do update aiGameId [AiGameGameStatus =. (_status cd'')]
-                                                                                                                         update aiGameId [AiGameHistory =. (historyToText $ (_history cd''))]
+                                                                                                              runDB $ do update aiGameId [AiGameGameStatus =. (cd''^.status)]
+                                                                                                                         update aiGameId [AiGameHistory =. (historyToText $ (cd''^.history))]
                                                                                                                          update aiGameId [AiGameThinking =. False]
                                                                                                           redirect (AiGameR aiGameId)
-                                                                                          Invalid r -> do setMessage $ toHtml ("Move invalid: " Prelude.++ show r)
+                                                                                          Invalid r -> do setMessage $ toHtml ("Move invalid: " ++ display r)
                                                                                                           redirect (AiGameR aiGameId)
-                                            FormFailure f -> do setMessage $ toHtml ("Failure " Prelude.++ show f)
+                                            FormFailure f -> do setMessage $ toHtml ("Failure " ++ show f)
                                                                 redirect (AiGameR aiGameId)
                                             FormMissing -> do setMessage $ toHtml ("Form Missing" :: Text)
                                                               redirect (AiGameR aiGameId)
                             False -> do setMessage $ toHtml ("Not authorized to make this move" :: Text)
                                         redirect (AiGameR aiGameId)
 
+-- | Widget that displays the spinner / thinking status of the AI
 aiWaitSpinner :: Widget
 aiWaitSpinner = do toWidget [whamlet|
                                 <div .row #waitbox>

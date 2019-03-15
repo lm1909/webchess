@@ -4,6 +4,12 @@
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 
+{-|
+Module      : Handler.Ranking
+
+Handler to produce highscore list of all webchess users
+-}
+
 module Handler.Ranking where
 
 import           Import

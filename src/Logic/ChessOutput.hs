@@ -2,12 +2,17 @@
 
 module Logic.ChessOutput where
     
-import Logic.ChessData
-import           Data.Array
-import Control.Lens
+import           Control.Lens
 import           Data.Char
-import Prelude
+import           Data.Array
 
+import           Logic.ChessData
+import           Logic.ChessLegal
+
+--------------------------------------------------------
+-- * Pretty printing
+-- Module adds pretty printing for everythin in Logic
+--------------------------------------------------------
 
 class Display a where
     display :: a -> String
@@ -40,4 +45,20 @@ instance Display GameStatus where
 
 instance Display ChessData where
     display cd = "Game " ++ (display $ cd^.status) ++ ", on turn: " ++ (display $ cd^.playerOnTurn) ++ "\n" ++ (display $ cd^.board) ++ (concat $ fmap (\m -> ((display m) ++ "\n")) $ cd^.history) ++ (concat $ fmap (\(pc, col) -> (display col) ++ ": " ++ (display pc) ++ "\n") $ cd^.offPieces)
+
+instance Display Reason where
+    display Bounds = "Move is not in bounds of the playing field"
+    display Player = "Wrong player"
+    display NoPiece = "There is no piece that can be moved"
+    display TakeOwn = "Not allowed to take own piece"
+    display NoMove = "Must make a move"
+    display QueenMove = "Illegal move for a queen"
+    display KingMove = "Illegal move for a king"
+    display RookMove = "Illegal move for a rook"
+    display BishopMove = "Illegal move for a bishop"
+    display PawnMove = "Illegal move for a pawn"
+    display KnightMove = "Illegal move for a knight"
+    display KingDanger = "Illegal; must not put the king in danger"
+    display GameOver = "Illegal: Game is already over"
+
 
