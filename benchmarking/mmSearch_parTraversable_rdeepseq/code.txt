@@ -1,0 +1,2 @@
+
+mmSearch d col = mmMax . (\t -> (fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) t ) `using` parTraversable rdeepseq) . verticalprune d . (gameTree)

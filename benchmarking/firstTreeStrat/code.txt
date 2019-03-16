@@ -1,0 +1,10 @@
+
+-- | min-max-search (see: https://www.chessprogramming.org/Minimax)
+mmSearch :: Int -> Color -> ChessData -> Int
+mmSearch d col = mmMax . (\t -> (fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd)) t ) `using` treeStrat) . verticalprune d . (gameTree) -- `using` parTraversable rpar
+
+treeStrat :: Strategy (Tree a)
+treeStrat (Node v []) = do v' <- rpar v
+                           return (Node v' [])
+treeStrat (Node v children) = do children' <- (parListChunk 3 treeStrat) children
+                                 return (Node v children')                                
