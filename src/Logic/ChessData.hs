@@ -37,7 +37,7 @@ data Square = None | Ent Color Piece deriving (Show, Eq, Generic, NFData)
 data Piece = Pawn | Queen | King | Rook | Bishop | Knight deriving (Show, Eq, Generic, NFData)
 
 data Move = Move { _number :: Int, -- ^ number must be consistent with position in history
-                   _orig :: (Int, Int), _dest :: (Int, Int)} deriving (Show, Generic, NFData)
+                   _orig :: (Int, Int), _dest :: (Int, Int)} deriving (Show, Read, Eq, Generic, NFData)
 makeLenses ''Move
 
 
