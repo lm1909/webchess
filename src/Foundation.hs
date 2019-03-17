@@ -26,6 +26,9 @@ import           Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe    as Unsafe
 import           Yesod.Default.Util   (addStaticContentExternal)
 
+import qualified Data.Set as DS
+import Control.Concurrent.STM
+
 import Logic.OpeningBook
 
 -- | The foundation datatype for your application. This can be a good place to
@@ -40,6 +43,7 @@ data App = App
     , appLogger      :: Logger
     
     , openingBook :: OpeningBook -- ^ opening book for the chess moves; this way is pretty rudimentary (thought something ~database connect like would be fun to put here)
+    , lobby :: TVar (DS.Set UserId) -- ^ lobby: this set contains all player that are interested in a game (entered themselves in lobby)
     }
 
 data MenuItem = MenuItem
@@ -187,6 +191,14 @@ instance Yesod App where
                                  Just _  -> Authorized
     isAuthorized NewAiR x = isAuthorized NewR x
     isAuthorized NewHumanR x = isAuthorized NewR x
+
+    isAuthorized LobbyR _ = do auth <- maybeAuthId
+                               return $ case auth of
+                                   Nothing -> AuthenticationRequired
+                                   Just _  -> Authorized
+    isAuthorized JoinLobbyR _ = isAuthenticated
+    isAuthorized (LobbyPairUpR _) _ = isAuthenticated
+    
 
 
     -- This function creates static content files in the static folder

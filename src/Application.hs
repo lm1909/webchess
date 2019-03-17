@@ -40,6 +40,8 @@ import System.Log.FastLogger                (defaultBufSize, newStdoutLoggerSet,
 
 import Logic.OpeningBook
 
+import qualified Data.Set as DS
+
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!
 import Handler.Common
@@ -51,6 +53,7 @@ import Handler.New
 import Handler.Running
 import Handler.Ranking
 import Handler.AiGame
+import Handler.Lobby
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the
@@ -72,6 +75,8 @@ makeFoundation appSettings = do
         (appStaticDir appSettings)
 
     openingBook <- parseOpeningBook "./openingBook/book" -- ^ reads the opening book from disk
+
+    lobby <- newTVarIO DS.empty -- ^ creates a new empty set for the lobby (a the beginning of the server start no one is already joined)
 
     -- We need a log function to create a connection pool. We need a connection
     -- pool to create our foundation. And we need our foundation to get a

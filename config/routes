@@ -21,3 +21,7 @@
 
 /running/ RunningR GET
 /ranking RankingR GET
+
+/lobby/ LobbyR GET
+/lobby/join JoinLobbyR POST
+/lobby/pairup/#UserId LobbyPairUpR POST

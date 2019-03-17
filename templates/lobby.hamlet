@@ -1,0 +1,26 @@
+<div .masthead>
+    <div .container>
+        <div .row>
+            <h1 .header>
+                Lobby
+                <h2> Meet other webchess players and join someone for a game of chess!
+
+<div .container>
+    $maybe msg <- mmsg
+      <div .alert.alert-info #message>#{msg}
+
+<div .container #introtext>
+    The lobby is the best place to find new friends and chess partners. Just click on an user to challenge for a game or click on join lobby to wait yourself.
+
+<div .container #lobbylist>
+    <form method=post action=@{JoinLobbyR}>
+        <button .button .btn .btn-primary .btn-lg .btn-block #enterbutton type="submit">Enter Lobby
+    <div .row>
+        <ul .list-group>
+            $case users
+                $of []
+                    <h2 #noonelabel> Currently noone is in the lobby yet - tell your friends about webchess!
+                $of _
+                    $forall u <- users
+                        <form method=post action=@{LobbyPairUpR (entityKey u)}>
+                            <button .button .list-group-item type="submit">#{userNick $ entityVal u}
