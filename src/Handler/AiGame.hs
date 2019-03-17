@@ -27,8 +27,6 @@ import           Logic.ChessLegal
 import           Logic.ChessOutput
 import           Render.HtmlRender
 
-import Logic.OpeningBook -- @TODO remove
-
 aiGameToChessData :: AiGame -> ChessData
 aiGameToChessData aigame = gameFromMoves (textToHistory $ aiGameHistory aigame)
 
@@ -57,8 +55,8 @@ postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken move
                                                                                                                      update aiGameId [AiGameGameStatus =. (cd'^.status)]
                                                                                                                      update aiGameId [AiGameThinking =. True]
                                                                                                           openingbook <- fmap openingBook getYesod
-                                                                                                          $(logInfo) (DT.pack $ prettify openingbook)
-                                                                                                          $(logInfo) (DT.pack $ show (getOpening openingbook (cd^.history)))
+                                                                                                          -- $(logInfo) (DT.pack $ prettify openingbook)
+                                                                                                          -- $(logInfo) (DT.pack $ show (getOpening openingbook (cd^.history)))
 
                                                                                                           runInnerHandler <- handlerToIO
                                                                                                           _ <- liftIO $ forkIO $ runInnerHandler $ do
@@ -67,7 +65,6 @@ postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken move
                                                                                                                          update aiGameId [AiGameHistory =. (historyToText $ (cd''^.history))]
                                                                                                                          update aiGameId [AiGameThinking =. False]
 
-                                                                                                              $(logInfo) (DT.pack $ show (getOpening openingbook (cd^.history)))
                                                                                                           redirect (AiGameR aiGameId)
                                                                                           Invalid r -> do setMessage $ toHtml ("Move invalid: " ++ display r)
                                                                                                           redirect (AiGameR aiGameId)
@@ -81,18 +78,25 @@ postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken move
 -- | Widget that displays the spinner / thinking status of the AI
 aiWaitSpinner :: Widget
 aiWaitSpinner = do toWidget [whamlet|
-                                <div .row #waitbox>
-                                    <div .col-lg-2 .spinner>
-                                    <div .col-lg-8 #aithinkingtext>
-                                        <h3> AI is thinking..
+                                <div #wrapper>
+                                    <div #waitbox>
+                                        <div .spinner>
+                                        <div #aithinkingtext>
+                                            <h3> AI is thinking..
+                            |]
+                   toWidget [cassius| #wrapper
+                                        align-text: center;
+                                        display: flex;
                             |]
                    toWidget [cassius| #waitbox
-                                        margin: auto;
-                                        padding: 10px;
+                                        margin-left: auto;
+                                        margin-right: auto;
+                                        padding: 1%
                                         display: inline-flex;
                             |]
                    toWidget [cassius| #aithinkingtext
                                         align-text: right;
+                                        margin: 5px;
                             |]
                    addScriptRemote "http://code.jquery.com/jquery-latest.js" -- this is necessary for the live update view js
                    $(widgetFile "autoload-aistatus")
