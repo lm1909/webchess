@@ -10,12 +10,10 @@
       <div .alert.alert-info #message>#{msg}
 
 <div .container>
-
     $if (aiGameThinking aigame)
         ^{aiWaitSpinner}
     
-    <div .row>
-    ^{renderGameStage moveauthorized cd movewidget enctype}
+^{renderGameStage moveauthorized cd movewidget enctype}
 
 
 <div .container #advanceddebug>

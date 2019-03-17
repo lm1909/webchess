@@ -30,8 +30,8 @@ moveForm extra = do
     (dyRes, dyView) <- mreq intField "dyView" Nothing
     let moveRes = MoveForm <$> oxRes <*> oyRes <*> dxRes <*> dyRes
     let widget = do toWidget [whamlet| #{extra}
-                                       <div .container #controlcontainer>
-                                           <div .row>
+                                       <div #controlcontainer>
+                                           <div .row #inputformrow>
                                              <div .col-md-1>
                                                  <b>Move
                                              <div .col .align-self-end #coords>From (^{fvInput oxView}, ^{fvInput oyView}) to (^{fvInput dxView}, ^{fvInput dyView})
@@ -40,12 +40,14 @@ moveForm extra = do
                     toWidget [cassius| #movebutton
                                             margin: 10px 0px 10px 0px;
                              |]
+                    toWidget [cassius| #inputformrow
+                                            margin: 0px;
+                             |]
                     toWidget [cassius| #controlcontainer
                                             padding: 10px;
                              |]
                     toWidget [cassius| #coords
                                             text-align: right;
-                                            padding-right: 25px;
                              |]
     return (moveRes, widget)
 
@@ -145,7 +147,7 @@ renderOffPieces opcs = do toWidget [whamlet| <div #offpieces>
 
 -- | renders the entire chess container in html
 renderChessContainer :: ChessData -> Widget
-renderChessContainer cd = do toWidget [whamlet| <div .container #chesscontainer>
+renderChessContainer cd = do toWidget [whamlet| <div #chesscontainer>
                                                     <div #onturn>
                                                         <h2 .centered #onturn> Player on turn is <b> #{show $ _playerOnTurn cd} </b>
                                                     ^{renderBoard $ _board cd}
@@ -160,7 +162,7 @@ renderChessContainer cd = do toWidget [whamlet| <div .container #chesscontainer>
 
 renderGameStage :: Bool -> ChessData -> Widget -> Enctype -> Widget
 renderGameStage moveauth cd moveformwidget enctype = do toWidget [whamlet| <div .container>
-                                                                              <div .container #exTab>
+                                                                              <div #exTab>
                                                                                   <ul .nav .nav-tabs>
                                                                                       <li .active>
                                                                                           <a href="#game" data-toggle="tab"> Game

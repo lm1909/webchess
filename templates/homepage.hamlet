@@ -25,7 +25,7 @@
         <p .card-text>Show a highscore ranking list of the top 100 performing chess players on webchess
         <a href=@{RankingR} .btn .btn-primary>Get ranking
     <div .col-lg-3 .card .stretched-link>
-      <img .card-img-top src=@{StaticR svg_star_svg} alt="" #lobbycardimg>
+      <img .card-img-top src=@{StaticR svg_lobby_svg} alt="" #lobbycardimg>
       <div .card-body>
         <h4 .card-title>Lobby
         <p .card-text>Find other webchess users who are interested in a game of chess
