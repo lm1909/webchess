@@ -4,6 +4,11 @@
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE RecordWildCards   #-}
 
+{-|
+Module      : Handler.Lobby
+
+The Handler module realizes a "pool" of webchess users (by UserId) in a TVar in the foundation datatype as a shared state. User can enter the pool / exit the pool by challenging to a game
+-}
 module Handler.Lobby where
 
 import Import
