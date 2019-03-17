@@ -37,8 +37,12 @@ postProfileR = do ((result, widget), enctype) <- runFormPost (accountForm Nothin
                   (person) <- runDB $ get authid
 
                   case result of
-                    FormSuccess account -> do runDB $ update authid [UserNick =. (nick account)] -- @TODO need to check here that username is unique
-                                              setMessage $ toHtml ("Updated User nickname" :: Text)
-                                              redirect ProfileR
+                    FormSuccess account -> do already <- runDB $ getBy $ (UniqueNick (nick account))
+                                              case already of 
+                                                Nothing -> do runDB $ update authid [UserNick =. (nick account)]
+                                                              setMessage $ toHtml ("Updated User nickname" :: Text)
+                                                              redirect ProfileR
+                                                _ -> do setMessage $ toHtml ("Username already taken" :: Text)
+                                                        redirect ProfileR
                     _ -> defaultLayout $ do setMessage $ toHtml ("Form input invalid" :: Text)
                                             redirect ProfileR
