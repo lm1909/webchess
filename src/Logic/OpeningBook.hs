@@ -1,4 +1,9 @@
-module Logic.OpeningBook(openingBookDepth, Variant, OpeningBook, getOpening) where
+{-|
+Module      : Logic.OpeningBook
+
+This module allows to read in the data of an opening book and search for moves with a certain history
+-}
+module Logic.OpeningBook(openingBookDepth, OpeningBook, getOpening, openingbook, parseOpeningBook, writeOut) where
 
 import Logic.ChessData
 
@@ -25,14 +30,33 @@ getOpening book ms = map snd $ getOpening' book (reverse ms) 1 -- 1 is root node
           getOpening' graph (m:ms) n = concat $ map (getOpening' graph ms) $ map fst $ filter (\lm -> m == snd lm) (lsuc graph n)
 
 --------------------------------------------------------
+-- Parsing
+--------------------------------------------------------
+
+-- | Read a opening book from the specified path
+-- NOTE: if the specified opening book file cannot be parsed, the server doesn't even start up
+parseOpeningBook :: String -> IO OpeningBook
+parseOpeningBook path = do text <- readFile path
+                           let ob = readsPrec 10 text
+                           case length ob of 
+                            1 -> return (fst $ head ob) 
+                            _ -> error "Invalid opening book file"
+
+--------------------------------------------------------
 -- Testing related
 --------------------------------------------------------
 
 root = (1, Variant "Root")
 kingpawn = (2, Variant "King Pawn's opening")
+sicilian = (3, Variant "Sicilian Defense")
+queenop = (4, Variant "Queen's opening")
 
 openingbook :: OpeningBook
-openingbook = mkGraph [root, kingpawn] [(1, 2, Move 1 (5, 2) (5, 3))]
+openingbook = mkGraph [root, kingpawn, sicilian, queenop] [(1, 2, Move 1 (5, 2) (5, 4)), (2, 3, Move 2 (3, 7) (3, 5)), (1, 4, Move 1 (4, 2) (4, 4))]
 
-parsetest = showsPrec 2 openingbook
+parsetest :: String
+parsetest = showsPrec 2 openingbook ""
+
+writeOut :: IO ()
+writeOut = writeFile "./openingBook/book" parsetest
 

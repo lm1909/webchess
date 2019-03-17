@@ -15,6 +15,8 @@ module Handler.AiGame where
 
 import           Control.Concurrent
 import           Control.Lens
+import           qualified Data.Text as DT
+import           Data.Graph.Inductive
 import           Import
 
 import           Logic.Ai
@@ -25,6 +27,7 @@ import           Logic.ChessLegal
 import           Logic.ChessOutput
 import           Render.HtmlRender
 
+import Logic.OpeningBook -- @TODO remove
 
 aiGameToChessData :: AiGame -> ChessData
 aiGameToChessData aigame = gameFromMoves (textToHistory $ aiGameHistory aigame)
@@ -53,12 +56,18 @@ postAiGameR aiGameId = do ((result, widget), enctype) <- runFormPostNoToken move
                                                                                           Valid cd' -> do runDB $ do update aiGameId [AiGameHistory =. (historyToText $ (cd'^.history))]
                                                                                                                      update aiGameId [AiGameGameStatus =. (cd'^.status)]
                                                                                                                      update aiGameId [AiGameThinking =. True]
+                                                                                                          openingbook <- fmap openingBook getYesod
+                                                                                                          $(logInfo) (DT.pack $ prettify openingbook)
+                                                                                                          $(logInfo) (DT.pack $ show (getOpening openingbook (cd^.history)))
+
                                                                                                           runInnerHandler <- handlerToIO
                                                                                                           _ <- liftIO $ forkIO $ runInnerHandler $ do
-                                                                                                              let cd'' = setMove (bestMove (aiGameDiff aigame) cd') cd' -- AI calculates & does its move
+                                                                                                              let cd'' = setMove (bestMove openingbook (aiGameDiff aigame) cd') cd' -- AI calculates & does its move
                                                                                                               runDB $ do update aiGameId [AiGameGameStatus =. (cd''^.status)]
                                                                                                                          update aiGameId [AiGameHistory =. (historyToText $ (cd''^.history))]
                                                                                                                          update aiGameId [AiGameThinking =. False]
+
+                                                                                                              $(logInfo) (DT.pack $ show (getOpening openingbook (cd^.history)))
                                                                                                           redirect (AiGameR aiGameId)
                                                                                           Invalid r -> do setMessage $ toHtml ("Move invalid: " ++ display r)
                                                                                                           redirect (AiGameR aiGameId)

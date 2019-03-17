@@ -1,0 +1,1 @@
+mkGraph [(1,Variant {name = "Root"}),(2,Variant {name = "King Pawn's opening"}),(3,Variant {name = "Sicilian Defense"}),(4,Variant {name = "Queen's opening"})] [(1,2,Move {_number = 1, _orig = (5,2), _dest = (5,4)}),(1,4,Move {_number = 1, _orig = (4,2), _dest = (4,4)}),(2,3,Move {_number = 2, _orig = (3,7), _dest = (3,5)})]

@@ -2,6 +2,7 @@ module Logic.Ai where
 
 import           Logic.ChessData
 import           Logic.ChessLegal
+import           Logic.OpeningBook
 
 import           Control.Parallel.Strategies
 import           Control.Lens
@@ -19,9 +20,11 @@ import           Data.Tree
 data AIDiff = Easy | Medium deriving (Show, Read, Eq, Enum, Bounded)
 
 -- this is a stable function
-bestMove :: AIDiff -> ChessData -> Move
-bestMove Easy cd   = minmaxMax 3 (cd^.playerOnTurn) cd
-bestMove Medium cd = snd $ dynprunAlphaBeta 6 (cd^.playerOnTurn) cd
+bestMove :: OpeningBook -> AIDiff -> ChessData -> Move
+bestMove _ Easy cd   = minmaxMax 3 (cd^.playerOnTurn) cd
+bestMove ob Medium cd -- atm this always chooses the first move; deciding on for example statistical information for future feature?
+    | ((length (cd^.history) < openingBookDepth) && (length (getOpening ob (cd^.history)) > 0)) = ((getOpening ob (cd^.history)) !! 0) -- move from opening book if still opening phase & move found
+    | otherwise = snd $ dynprunAlphaBeta 5 (cd^.playerOnTurn) cd -- do alpha-beta-search
 
 --------------------------------------------------------
 -- General
