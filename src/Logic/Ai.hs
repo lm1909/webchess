@@ -88,28 +88,6 @@ minmaxMax d col cd = snd $ maximumBy (comparing fst) $ (fmap (\m -> (mmSearch d 
 mmSearch :: Int -> Color -> ChessData -> Int
 mmSearch d col = maximum . ((\(Node _ children) -> map mmMin children `using` parList rdeepseq)) . (\t -> (fmap (\cd -> (optimisationDirection col) * (gameEvaluate cd) ) t) ) . verticalprune d . gameTree -- `using` parTraversable rpar
 
-
--- pmap :: (a -> b) -> Tree a -> Tree b
--- pmap f (Node a children)
-
--- parmap :: (a -> b) -> (Tree a) -> (Tree b) parmap f (Node v []) = Node (f v) []
--- parmap f (Node v children) = runEval $ do children' <- parmap 
---                                           v' <- f v `using` rseq
-
--- treeStrat :: (NFData a) => Int -> Strategy (Tree a)
--- treeStrat _ (Node v []) = do v' <- rdeepseq v
---                              return (Node v' [])
--- treeStrat 0 (Node v children) = do children' <- rdeepseq children
---                                    v' <- rdeepseq v
---                                    return (Node v' children')                                
--- treeStrat d (Node v children) = do children' <- (parList $ treeStrat (d-1)) children
---                                    v' <- rseq v
---                                    return (Node v' children')                                
-
--- treeStrat :: (NFData a) => Strategy (Tree a)
--- treeStrat (Node a children) = do a' <- a `using` (rparWith rdeepseq)
---                                  return (Node a' children)
-
 mmMax :: Tree Int -> Int
 mmMax (Node v []) = v
 mmMax (Node v children) = maximum (map mmMin children)
