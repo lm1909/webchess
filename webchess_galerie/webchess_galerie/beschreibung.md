@@ -1,0 +1,3 @@
+_webchess_ is a web-based chess platform with human-human and human-AI games as well as many social features.
+
+Supports account system for authentification / social / elo system. Users can play against each other in a graphical, clickable game; supports live-updating spectator mode. Moreover one can play against two AIs; a parallelized vanilla min-max or an alpha-beta-pruning algorithm with dynamical search depth, move ordering, horizontal pruning, a game phase dependent piece-square table instant eval heuristic, quiescence search and an opening book. Moreover there is a global highscore list, a lobby to find new challengers and a running games overview.
