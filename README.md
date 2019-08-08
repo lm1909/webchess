@@ -12,6 +12,12 @@ stack build webchess --ghc-options "-O2 -threaded"
 stack exec webchess --rts-options "-N4"
 ```
 
+## screenshots
+
+![](webchess_galerie/homepage.png)
+
+![](webchess_galerie/aigame.png)
+
 ## features
 
 ###### accounts & elo system
